@@ -13,7 +13,11 @@ class Unit:
     def __str__(self):
         return "A Unit was summoned"
     
-    def move(self, frame, team):
+    def move(self, frame:int, team:list):
+        """
+        Move the troop towards its Target
+        """
+
         if frame in range(0, 500, 20) and self.__class__.__name__ != "Generator":
             new_x = self.x
             new_y = self.y
@@ -52,7 +56,10 @@ class Unit:
 
 class Footman(Unit):
     """The Footman Unit type (!:1/1/1)"""
-    def __init__(self, xy=list):
+    def __init__(self, xy:list):
+        """
+        Create Troop Footman at xy:(x, y) coordinates
+        """
         self.hp = 1
         self.attack = 1
         self.cost = 1
@@ -64,7 +71,10 @@ class Footman(Unit):
 
 class Horse(Unit):
     """The Horse Unit type (#:2/2/3)"""
-    def __init__(self, xy=list):
+    def __init__(self, xy:list):
+        """
+        Create Troop Horse at xy:(x, y) coordinates
+        """
         self.hp = 2
         self.attack = 2
         self.cost = 3
@@ -76,7 +86,10 @@ class Horse(Unit):
 
 class Soldier(Unit):
     """The Soldier Unit type (@:3/3/2)"""
-    def __init__(self, xy=list):
+    def __init__(self, xy:list):
+        """
+        Create Troop Solider at xy:(x, y) coordinates
+        """
         self.hp = 3
         self.attack = 3
         self.cost = 3
@@ -88,7 +101,10 @@ class Soldier(Unit):
 
 class Summoner(Unit):
     """The Summoner Unit type ($:1/0/6)"""
-    def __init__(self, xy=list):
+    def __init__(self, xy:list):
+        """
+        Create Troop Summoner at xy:(x, y) coordinates
+        """
         self.hp = 1
         self.attack = 0
         self.cost = 6
@@ -100,7 +116,10 @@ class Summoner(Unit):
 
 class Minion(Unit):
     """The Minion Unit type (%:1/2/0)"""
-    def __init__(self, xy=list):
+    def __init__(self, xy:list):
+        """
+        Create Troop minion at xy:(x, y) coordinates
+        """
         self.hp = 1
         self.attack = 2
         self.cost = 0
@@ -113,7 +132,10 @@ class Minion(Unit):
 
 class Generator(Unit):
     """The Generator Unit type (^:4/0/0)"""
-    def __init__(self, xy=list):
+    def __init__(self, xy:list):
+        """
+        control Troop generator at xy:(x, y) coordinates
+        """
         self.hp = 4
         self.attack = 0
         self.cost = 0
@@ -125,7 +147,10 @@ class Generator(Unit):
 
 class Runner(Unit):
     """The Runner Unit type (&:3/3/8)"""
-    def __init__(self, xy=list):
+    def __init__(self, xy:list):
+        """
+        Create Troop Runner at xy:(x, y) coordinates
+        """
         self.hp = 3
         self.attack = 3
         self.cost = 8
@@ -137,7 +162,10 @@ class Runner(Unit):
 
 class Tank(Unit):
     """The Tank Unit type (*:10/10/8)"""
-    def __init__(self, xy=list):
+    def __init__(self, xy:list):
+        """
+        Create Troop Tank at xy:(x, y) coordinates
+        """
         self.hp = 10
         self.attack = 10
         self.cost = 8

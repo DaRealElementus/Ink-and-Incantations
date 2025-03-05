@@ -3,12 +3,19 @@
 
 import random, pygame
 
-def target(controlled, targets, gens, player_hp, enchanter_hp):
-    p_e_controled = 0
+def target(controlled:list, targets:list, gens:list, player_hp:int, enchanter_hp:int) -> None:
+    """
+    Updates every enemy troop with a target based on the game state
+    """
+
+
+
+
+    p_e_controlled = 0
     controlled_gens = []
     for e in controlled:
         if e.__class__.__name__ == "Generator":
-            p_e_controled += 1
+            p_e_controlled += 1
             controlled_gens.append(e)
 
     num_defenders = max(1, len(controlled) // 3)  # Assign one-third of the units to defense, at least one unit
@@ -17,7 +24,7 @@ def target(controlled, targets, gens, player_hp, enchanter_hp):
 
     for unit in controlled:
         # Prioritize capturing Generator points if not controlled
-        if p_e_controled <= len(gens):
+        if p_e_controlled <= len(gens):
             if unit.__class__.__name__ != "Generator":
                 if gens:
                     Targeted = random.choice(gens)
@@ -25,7 +32,7 @@ def target(controlled, targets, gens, player_hp, enchanter_hp):
             continue
 
         # Defend captured Generator points
-        if p_e_controled > 0 and defenders_assigned < num_defenders:
+        if p_e_controlled > 0 and defenders_assigned < num_defenders:
             if unit.__class__.__name__ != "Generator":
                 if controlled_gens:
                     Targeted = random.choice(controlled_gens)
@@ -49,7 +56,12 @@ def target(controlled, targets, gens, player_hp, enchanter_hp):
             # If no targets, attack player's base
             unit.target = [player_base_x, player_base_y]
 
-def summon(mana, p_e_controled, controlled):
+def summon(mana:int, p_e_controlled:int, controlled:list) -> None:
+    """
+    Returns the id of the troop the Ai wants to summon
+    """
+
+
     # Define the units and their mana costs
     units = [
         {'name': 'Footman', 'cost': 1, 'id': 0, 'weight': 0.5},
@@ -66,7 +78,7 @@ def summon(mana, p_e_controled, controlled):
                 unit_counts[u['id']] += 1
 
     # Adjust weights based on the number of controlled generators
-    if p_e_controled < 2:
+    if p_e_controlled < 2:
         # Prioritize faster units
         #this is the strategy for this game, capture then generators first and hold them
         for unit in units:

@@ -3,7 +3,7 @@ from Ai import Enchanter, Madman, Monarch
 from pygame.locals import *
 
 
-def BatStart(Ai, display):
+def BatStart(Ai:str, display:pygame.Surface):
     player_mana = 5
     Enchanter_mana = 5
     player_HP = 20
@@ -13,7 +13,6 @@ def BatStart(Ai, display):
     score = 0
     max_time = 1200000
     start_time = time.time()
-    
     gameDisplay = display
     BattleGround = pygame.image.load("Assets\Sprites\pixil-frame-0.png")
     inkblot = pygame.image.load("Assets\Sprites\InkBlot.png")

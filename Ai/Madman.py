@@ -1,8 +1,10 @@
 """Madman Action Handler Class"""
 import random, pygame, os, platform, difflib, Units
 from Ai.names import names
-def target(controlled, targets, gens, player_hp, enchanter_hp):
-
+def target(controlled:list, targets:list, gens:list, player_hp:int, enchanter_hp:int) -> None:
+    """
+    Updates every enemy troop with a target based on the game state
+    """
     for unit in controlled:
         # Randomly decide whether to move or stay
         if random.choice([True, False]):
@@ -27,7 +29,10 @@ def target(controlled, targets, gens, player_hp, enchanter_hp):
             # Randomly move to a random position on the map
             unit.target = [random.randint(0, 1920), random.randint(0, 1080)]
 
-def summon(mana, p_e_controled, controlled):
+def summon(mana:int, p_e_controlled:int, controlled:list) -> None:
+    """
+    Returns the id of the troop the Ai wants to summon
+    """
     # Define the units and their mana costs
     units = [
         {'name': 'Footman', 'cost': 1, 'id': 0},
