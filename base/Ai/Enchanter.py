@@ -1,8 +1,9 @@
-"""Monarch Action Handler Class"""
+"""Enchanter Action Handler Class"""
+
 
 import random, pygame
 
-def target(controlled: list, targets: list, gens: list, player_hp: int, enchanter_hp: int, player_base: list, monarch_base: list) -> None:
+def target(controlled: list, targets: list, gens: list, player_hp: int, enchanter_hp: int, player_base: list, enchanter_base: list) -> None:
     """
     Updates every enemy troop with a target based on the game state
     """
@@ -13,20 +14,19 @@ def target(controlled: list, targets: list, gens: list, player_hp: int, enchante
             p_e_controlled += 1
             controlled_gens.append(e)
 
-    num_defenders = max(1, int(len(controlled) * 0.75))  # Assign 75% of the units to defense, at least one unit
-    num_patrollers = len(controlled) - num_defenders  # Remaining 25% for patrol or core defense
-
+    num_defenders = max(1, len(controlled) // 3)  # Assign one-third of the units to defense, at least one unit
     defenders_assigned = 0
-    patrollers_assigned = 0
 
     for unit in controlled:
         # Prioritize capturing Generator points if not controlled
+        if unit.__class__.__name__ == "Minion":
+            unit.target = unit.master.target
+            continue
         if p_e_controlled < len(gens):
             if unit.__class__.__name__ != "Generator":
                 Targeted = random.choice(gens)
                 unit.target = [Targeted.x, Targeted.y]
             continue
-
         # Defend captured Generator points
         if p_e_controlled > 0 and defenders_assigned < num_defenders:
             if unit.__class__.__name__ != "Generator":
@@ -36,24 +36,21 @@ def target(controlled: list, targets: list, gens: list, player_hp: int, enchante
                     defenders_assigned += 1
             continue
 
-        # Patrol or defend core
-        if patrollers_assigned < num_patrollers:
-            if unit.__class__.__name__ != "Generator":
-                # Randomly choose to patrol or defend core
-                if random.choice([True, False]):
-                    # Patrol around the monarch base
-                    unit.target = [
-                        random.randint(monarch_base[0] - 50, monarch_base[0] + 50),
-                        random.randint(monarch_base[1] - 50, monarch_base[1] + 50)
-                    ]
-                else:
-                    # Defend core
-                    unit.target = monarch_base
-                patrollers_assigned += 1
+        # Defend own base if under threat
+        if enchanter_hp < 10:
+            unit.target = [
+                random.randint(enchanter_base[0] - 50, enchanter_base[0] + 50),
+                random.randint(enchanter_base[1] - 50, enchanter_base[1] + 50)
+            ]
             continue
 
-        # Default behavior: defend own base
-        unit.target = monarch_base
+        # Default behavior: attack player or target random enemy units
+        if len(targets) > 0:
+            Targeted = random.choice(targets)
+            unit.target = [Targeted.x, Targeted.y]
+        else:
+            # If no targets, attack player's base
+            unit.target = player_base
 
 def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
     """
@@ -61,13 +58,13 @@ def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
     """
     # Define the units and their mana costs
     units = [
-        {'name': 'Footman', 'cost': 1, 'id': 0, 'weight': 1},
+        {'name': 'Footman', 'cost': 1, 'id': 0, 'weight': 0.5},
         {'name': 'Horse', 'cost': 3, 'id': 1, 'weight': 1},
         {'name': 'Soldier', 'cost': 3, 'id': 2, 'weight': 1},
-        {'name': 'Tank', 'cost': 8, 'id': 5, 'weight': 1}
+        {'name': 'Summoner', 'cost': 6, 'id': 3, 'weight': 2},
+        {'name': 'Runner', 'cost': 8, 'id': 4, 'weight': 3},
+        {'name': 'Tank', 'cost': 8, 'id': 5, 'weight': 3}
     ]
-
-    # Count the number of each unit type currently controlled
     unit_counts = {unit['id']: 0 for unit in units}
     for unit in controlled:
         for u in units:
@@ -76,20 +73,21 @@ def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
 
     # Adjust weights based on the number of controlled generators
     if p_e_controlled < 2:
-        # Prioritize tankier units for defense
+        # Prioritize faster units
         for unit in units:
-            if unit['id'] in [2, 5]:  # Soldier, Tank
-                unit['weight'] += 2
+            if unit['id'] in [0, 1, 4]:  # Footman, Horse, Runner
+                unit['weight'] += 3
     else:
-        # Maintain balance between different unit types
+        # Prioritize tankier units
         for unit in units:
-            unit['weight'] += 1
+            if unit['id'] in [2, 3, 5]:  # Soldier, Summoner, Tank
+                unit['weight'] += 3
 
-    # Filter units that can be summoned with the available mana and are within the limit
-    affordable_units = [unit for unit in units if unit['cost'] <= mana and unit_counts[unit['id']] < 10]
+    # Filter units that can be summoned with the available mana
+    affordable_units = [unit for unit in units if unit['cost'] <= mana and unit_counts[unit['id']] < 5]
 
     if not affordable_units:
-        print("Insufficient mana to summon any unit")
+        #print("Insufficient mana to summon any unit")
         return None
 
     # Choose a unit to summon based on the adjusted weights
@@ -101,5 +99,5 @@ def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
         if choice <= cumulative_weight:
             return unit['id']
 
-    print("Choice failed")
+    #print("Choice failed")
     return None

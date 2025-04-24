@@ -8,7 +8,7 @@
   - [Madman](#madman)
 - [Setup](#setup)
   - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
+  - [Mods](#modding)
 - [Resetting Your Save](#resetting-your-save)
 - [Credits](#credits)
 
@@ -16,7 +16,7 @@
 Dive into this new world taking place in the pages of a book, battling the Enchanter, Madman and the Monarch
 
 ## Opponents
-![A Image of the Opponents](Assets\Selector.jpg)
+![A Image of the Opponents](Assets/Selector.jpg)
 ### Enchanter
 Your first opponent <br>
 His quick thinking makes him a Formidable Foe, by far the smartest although he only serves to teach<br>
@@ -38,21 +38,20 @@ The veil breaks
 - Ensure you have Python installed (originally built with Python 3.11.9).
 - Add Python to your system's PATH during installation.
 
-### Installation
-1. Open the project folder in your terminal.
-2. Run the following command to install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Modding
+- Drag and Drop your selected mod into the mods folder
+- you will be prompted what version of I&I you wish to play when you run the game
+- Mods can be found [here](https://xliam.space/iaimods.html), Thanks Liam!
 
 on your first time running, I reccomend running SaveUpdater.py to ensure your save file is fresh
 
 ## Resetting Your Save
-THIS WILL RESET ALL YOUR PROGRESS, THIS ACTION IS NOT UNDO-ABLE <br>
+THIS WILL RESET ALL YOUR PROGRESS, THIS ACTION IS NOT REVERSEABLE <br>
 Run SaveUpdater.py to reset your save file
 
 ## Credits
 - **Director, Developer, and Artist**: Elementus
+- **ModLoader Developer and Mod Spearhead**: Liam (Typhoonz0)
 - **Music**:
   - [DeusLower](https://www.youtube.com/@DeusLower)
   - [Erang](https://www.youtube.com/channel/UC0xBatTv8HbChLQukeerUCg)

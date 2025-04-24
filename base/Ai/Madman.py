@@ -46,7 +46,7 @@ def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
     affordable_units = [unit for unit in units if unit['cost'] <= mana]
 
     if not affordable_units:
-        print("Insufficient mana to summon any unit")
+        #print("Insufficient mana to summon any unit")
         return None
 
     chosen_unit = random.choice(affordable_units)
