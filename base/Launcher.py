@@ -64,7 +64,7 @@ def render_wrapped_text(surface, text, font, color, alpha, rect, line_spacing=5)
 
 # check for update
 VERSION = "0.8.5"
-GITHUB_VERSION_URL = "https://raw.githubusercontent.com/DaRealElementus/Ink-and-Incantations/tree/main/base/Version.txt"  # URL to the version file on GitHub
+GITHUB_VERSION_URL = "https://raw.githubusercontent.com/DaRealElementus/Ink-and-Incantations/refs/heads/main/base/Version.txt"  # URL to the version file on GitHub
 def check_for_update():
     try:
         response = requests.get(GITHUB_VERSION_URL, timeout=5)
