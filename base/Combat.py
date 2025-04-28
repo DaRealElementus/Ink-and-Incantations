@@ -7,6 +7,19 @@ def cap_inkblots(inkblots, max_length=500):
     if len(inkblots) > max_length:
         del inkblots[0:len(inkblots) - max_length]
 
+def screenshot(screen):
+    """
+    Take a screenshot of the current screen and save it to the Screenshots directory outside of the base directory.
+    """
+    # Ensure the Screenshots directory exists
+    screenshot_dir = os.cwdir().split('\\')[-2] # Main directory
+    screenshots_dir = os.path.join(screenshot_dir, 'Screenshots')
+    os.makedirs(screenshots_dir, exist_ok=True)
+    screenshot_path = os.path.join(screenshots_dir, f'screenshot_{int(time.time())}.png')
+    pygame.image.save(screen, screenshot_path)
+    print(f"Screenshot saved to {screenshot_path}")
+
+
 def render_wrapped_text(surface, text, font, color, alpha, rect, line_spacing=5):
     """
     Render text that wraps within a given rectangle.\n
@@ -288,9 +301,12 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     break
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                        print("Game exiting")
                         quit()
                     if event.type == MOUSEBUTTONDOWN and event.button == 1:
                         skip = True
+                    if event.type == KEYDOWN and event.key == K_F12:
+                        screenshot(gameDisplay)
                 pygame.time.delay(1)
 
         else:
@@ -299,9 +315,12 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     break
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                        print("Game exiting")
                         quit()
                     if event.type == MOUSEBUTTONDOWN and event.button == 1:
                         skip = True
+                    if event.type == KEYDOWN and event.key == K_F12:
+                        screenshot(gameDisplay)
                 pygame.time.delay(1)
 
     # Fade in the background
@@ -481,10 +500,13 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                 # Event handling
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                        print("Game exiting")
                         pygame.quit()
                         return False
                     if event.type == MOUSEBUTTONDOWN or event.type == KEYDOWN:
                         skip = True
+                    if event.type == KEYDOWN and event.key == K_F12:
+                        screenshot(gameDisplay)
 
         friendly.clear()
         inkblots.clear()
@@ -522,6 +544,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
         # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                print("Game exiting")
                 running = False
                 pygame.quit()
                 return False
@@ -541,13 +564,18 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     show_fps_debug = True
             if event.type == KEYDOWN and event.key == K_F3:
                 show_battle_debug = not show_battle_debug
+            if event.type == KEYDOWN and event.key == K_F12:
+                screenshot(gameDisplay)
             if event.type == KEYDOWN and event.key == K_p:
                 paused = True
                 while paused:
                     gameDisplay.blit(pause, (800, 450))
                     pygame.display.flip()
                     for event in pygame.event.get():
+                        if event.type == KEYDOWN and event.key == K_F12:
+                            screenshot(gameDisplay)
                         if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                            print("Game exiting")
                             running = False
                             paused = False
                         if event.type == KEYDOWN and event.key == K_p:
@@ -606,8 +634,16 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                             # #print(f"Selection from {startselect} to {endselect}")
                             # #print(f"Selected units: {selected}")
             if event.type == MOUSEBUTTONDOWN and event.button == 3:
+                # check for enemy collision with the right click
+                TarObj = None
+                for e in enemy:
+                    if e.x - 10 <= event.pos[0] <= e.x + 42 and e.y - 10 <= event.pos[1] <= e.y + 42:
+                        TarObj = e
                 for s in selected:
-                    s.target = event.pos
+                    if TarObj:
+                        s.target = TarObj
+                    else:
+                        s.target = event.pos
             if event.type == MOUSEBUTTONDOWN and event.button == 2:
                 #middle mouse button
                 #print(event.pos)
@@ -632,10 +668,12 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     blot[1] = 0
             rotated = pygame.transform.rotate(inkblot, blot[3])
             rotated.convert_alpha()
-            rotated = rotated.set_alpha(blot[1])
+            rotated.set_alpha(blot[1])
             #print(rotated.get_alpha())
             if rotated:
                 gameDisplay.blit(rotated, blot[0])
+            else:
+                print(f"Error: {rotated}{blot[0]} {blot[1]} {blot[2]} {blot[3]}")
 
         for blot in mouseinkblots:
             if not Selecting:
@@ -647,10 +685,11 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     blot[1] = 0
             rotated = pygame.transform.rotate(inkblot, blot[3])
             rotated.convert_alpha()
-            rotated = rotated.set_alpha(blot[1])
-            #print(rotated.get_alpha())
+            rotated.set_alpha(blot[1])
             if rotated:
                 gameDisplay.blit(rotated, blot[0])
+            else:
+                print(f"Error: {rotated}{blot[0]} {blot[1]} {blot[2]} {blot[3]}")
 
 
         inkblots = [b for b in inkblots if b[1] > 0]
@@ -859,8 +898,13 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
 
 
         for s in selected:
-            gameDisplay.blit(selection_icon, (s.x, s.y))
-
+            if s.hp > 0:
+                gameDisplay.blit(selection_icon, (s.x, s.y))
+            else:
+                try:
+                    selected.remove(s)
+                except Exception as e:
+                    print(e)
         # player mana display
         manaCounter = mana_images[player_mana]
         gameDisplay.blit(manaCounter, manaCounter_pos)
@@ -999,10 +1043,13 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     break
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                        print("Game exiting")
                         pygame.quit()
                         return False
                     if event.type == MOUSEBUTTONDOWN and event.button == 1:
                         skip = True
+                    if event.type == KEYDOWN and event.key == K_F12:
+                        screenshot(gameDisplay)
         save = SaveUpdater.decode_save_file()
         save["beat_enchanter_first_time"] = True
         SaveUpdater.encode_save_file(save)
@@ -1044,6 +1091,8 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     running = False
                     pygame.quit()
                     return False
+                if event.type == KEYDOWN and event.key == K_F12:
+                        screenshot(gameDisplay)
 
             gameDisplay.fill((0, 0, 0))
             gameDisplay.blit(BattleGround, BattleGround_pos)
@@ -1102,10 +1151,13 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     break
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                        print("Game exiting")
                         pygame.quit()
                         return False
                     if event.type == MOUSEBUTTONDOWN and event.button == 1:
                         skip = True
+                        if event.type == KEYDOWN and event.key == K_F12:
+                            screenshot(gameDisplay)
                 pygame.time.delay(1)
 
     elif Ai == 'monarch' and not Won:
@@ -1129,10 +1181,13 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     break
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                        print("Game exiting")
                         pygame.quit()
                         return False
                     if event.type == MOUSEBUTTONDOWN and event.button == 1:
                         skip = True
+                    if event.type == KEYDOWN and event.key == K_F12:
+                        screenshot(gameDisplay)
 
     # Ask if the player wants to play again
     play_again_font = pygame.font.Font(os.path.join("Assets", "Fonts", "Speech.ttf"), int(screen_height * 0.05))  # Dynamic font size
@@ -1152,6 +1207,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
     while waiting_for_input:
         for event in pygame.event.get():
             if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                print("Game exiting")
                 pygame.quit()
                 return False
             if event.type == KEYDOWN:
@@ -1159,5 +1215,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     return True
                 elif event.key == K_n:
                     return False
+                if event.type == KEYDOWN and event.key == K_F12:
+                    screenshot(gameDisplay)
     #Show Score and ask if they wanna play again, if they player wants to return to menu, return False, Else return True (Doesnt apply to monarch as game is crashed)
 

@@ -63,14 +63,19 @@ def render_wrapped_text(surface, text, font, color, alpha, rect, line_spacing=5)
         y_offset += font.size(line)[1] + line_spacing
 
 # check for update
-VERSION = "0.8.6"
+VERSION = "0.8.7"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/DaRealElementus/Ink-and-Incantations/refs/heads/main/base/Version.txt"  # URL to the version file on GitHub
 def check_for_update():
     try:
         response = requests.get(GITHUB_VERSION_URL, timeout=5)
         if response.status_code == 200:
             latest_version = response.text.strip()
-            if latest_version != VERSION:
+            Maj,_min,Pat = latest_version.split('.')
+            Maj2,min2,Pat2 = VERSION.split('.')
+            Maj = int(Maj) - int(Maj2)
+            _min = int(_min) - int(min2)
+            Pat = int(Pat) - int(Pat2)
+            if Maj > 0 or _min > 0 or Pat > 0:
                 #print(f"[UPDATE] A new version ({latest_version}) is available! You have {VERSION}.")
                 return "update"  # Indicate that an update is available
             else:

@@ -22,7 +22,7 @@ class Unit:
         self.Asset = pygame.image.load(os.path.join("Assets", "Sprites", "unit_sprites", "Footman.png"))
 
     def __str__(self):
-        return "A Unit was summoned"
+        return "a unit of type " + self.__class__.__name__ + " with " + str(self.hp) + " HP and " + str(self.attack) + " attack at " + str(self.x) + " " + str(self.y) + " with a target of " + str(self.target) + " and a cost of " + str(self.cost) + " and a speed of " + str(self.speed)
     
 
     def move(self, dt: float, team: list, boundaries: list, Scalars: list) -> None:
@@ -33,12 +33,10 @@ class Unit:
         if self.__class__.__name__ != "Generator":
             new_x = self.true_x
             new_y = self.true_y
-
             scale_x, scale_y = Scalars[0], Scalars[1]
-            
-            if type(self.target) == object:
+            if isinstance(self.target, Unit):
                 target = [self.target.x, self.target.y]
-            elif type(self.target) == list: 
+            elif type(self.target) in [list, tuple]: 
                 target = self.target
             else:
                 target = [self.x, self.y]
@@ -46,18 +44,17 @@ class Unit:
 
             # Adjust movement speed based on delta time
             if target[0] >= self.x:
-                new_x += abs(self.speed * (dt * 4) * scale_x)
+                new_x += abs((random.randint(1, self.speed)) * (dt * 4) * scale_x)
             elif target[0] < self.x:
-                new_x -= abs(self.speed * (dt * 4) * scale_x)
+                new_x -= abs((random.randint(1, self.speed)) * (dt * 4) * scale_x)
 
             if target[1] >= self.y:
-                new_y += abs(self.speed * (dt * 4) * scale_y)
+                new_y += abs((random.randint(1, self.speed)) * (dt * 4) * scale_y)
             elif target[1] < self.y:
-                new_y -= abs(self.speed * (dt * 4) * scale_y)
+                new_y -= abs((random.randint(1, self.speed)) * (dt * 4) * scale_y)
 
             # goal flag update
-
-            if int(self.new_y) == target[1] and int(self.new_x) == target[0]:
+            if int(new_y) == target[1] and int(new_x) == target[0]:
                 self.achived = True
                 self.Goal = 'None'
 
@@ -112,7 +109,6 @@ class Horse(Unit):
         super().__init__()
         self.hp = 2
         self.attack = 2
-        
         self.speed = 3
         self.x = xy[0]
         self.y = xy[1]
@@ -158,7 +154,7 @@ class Minion(Unit):
         super().__init__()
         self.hp = 1
         self.attack = 1
-        self.speed = 1.5
+        self.speed = 2
         self.x = xy[0]
         self.y = xy[1]
         self.true_x, self.true_y = xy
