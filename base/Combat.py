@@ -634,20 +634,22 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
             rotated.convert_alpha()
             rotated = rotated.set_alpha(blot[1])
             #print(rotated.get_alpha())
-            gameDisplay.blit(rotated, blot[0])
+            if rotated:
+                gameDisplay.blit(rotated, blot[0])
 
         for blot in mouseinkblots:
-                if not Selecting:
-                    blot[2] -= 1
-                    if blot[2] <= 0:
-                        blot[2] = 0
-                        blot[1] -= 1
-                    if blot[1] < 0:
-                        blot[1] = 0
-                rotated = pygame.transform.rotate(inkblot, blot[3])
-                rotated = rotated.convert_alpha()
-                rotated.set_alpha(blot[1])
-                #print(rotated.get_alpha())
+            if not Selecting:
+                blot[2] -= 1
+                if blot[2] <= 0:
+                    blot[2] = 0
+                    blot[1] -= 1
+                if blot[1] < 0:
+                    blot[1] = 0
+            rotated = pygame.transform.rotate(inkblot, blot[3])
+            rotated.convert_alpha()
+            rotated = rotated.set_alpha(blot[1])
+            #print(rotated.get_alpha())
+            if rotated:
                 gameDisplay.blit(rotated, blot[0])
 
 
