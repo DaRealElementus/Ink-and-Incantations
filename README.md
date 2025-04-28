@@ -16,7 +16,7 @@
 Dive into this new world taking place in the pages of a book, battling the Enchanter, Madman and the Monarch
 
 ## Opponents
-![A Image of the Opponents](Assets/Selector.jpg)
+![A Image of the Opponents](base/Assets/Selector.jpg)
 ### Enchanter
 Your first opponent <br>
 His quick thinking makes him a Formidable Foe, by far the smartest although he only serves to teach<br>

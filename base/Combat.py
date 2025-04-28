@@ -40,7 +40,7 @@ def render_wrapped_text(surface, text, font, color, alpha, rect, line_spacing=5)
     for line in lines:
         line_surface = font.render(line, True, color)
         line_surface.set_alpha(alpha)
-        # print(f"rendering line: {line}")
+        # (f"rendering line: {line}")
         pygame.draw.rect(surface, (0, 0, 0), line_surface.get_rect(topleft=(rect.left, y_offset)))  # Draw a Black rectangle around the text
         surface.blit(line_surface, (rect.left, y_offset))
         y_offset += font.size(line)[1] + line_spacing
@@ -663,14 +663,20 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     if p.x - 10 <= f.x <= p.x + 42 and p.y - 10 <= f.y <= p.y + 42:
                         # #print("Friendly Pump gained")
                         score += 100
-                        Pumps.remove(p)
+                        try:
+                            Pumps.remove(p)
+                        except Exception as e:
+                            print(e)
                         friendly.append(Units.Generator([p.x, p.y], Scalars))
                         break
                 for e in enemy:
                     if p.x - 42 <= e.x <= p.x + 42 and p.y - 42 <= e.y <= p.y + 42:
                         # #print("Enemy Pump gained")
                         enemy.append(Units.Generator([p.x, p.y], Scalars))
-                        Pumps.remove(p)
+                        try:
+                            Pumps.remove(p)
+                        except Exception as e:
+                            print(e)
                         break
                 # Remove the pump from the field if its HP is 0
             else:
@@ -701,7 +707,10 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     enemy.append(Units.Generator([f.x, f.y], Scalars))
                 else:
                     inkblots.append([(f.x, f.y), 255, 1000, random.choice(range(0, 360, 45))])
-                friendly.remove(f)
+                try:
+                    friendly.remove(f)
+                except Exception as e:
+                    print(e)
                 continue
             # movement
             else:
@@ -726,7 +735,10 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     f.target = f.master.target
                 if f.lifetime >= 10:
                     inkblots.append([(f.x, f.y), 255, 1000, random.choice(range(0, 360, 45))])
-                    friendly.remove(f)
+                    try:
+                        friendly.remove(f)
+                    except Exception as e:
+                        print(e)
                     continue
 
         # similar to player controlled units, but for enchanter units
@@ -744,7 +756,10 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     friendly.append(Units.Generator([e.x, e.y], Scalars))
                 else:
                     inkblots.append([(e.x, e.y), 255, 1000, random.choice(range(0, 360, 45))])
-                enemy.remove(e)
+                try:
+                    enemy.remove(e)
+                except Exception as e:
+                    print(e)
                 continue
             else:
                 e.move(dt, enemy, boundaries, Scalars)
@@ -763,7 +778,10 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                 e.lifetime += dt
                 if e.lifetime >= 10:
                     inkblots.append([(e.x, e.y), 255, 1000, random.choice(range(0, 360, 45))])
-                    enemy.remove(e)
+                    try:
+                        enemy.remove(e)
+                    except Exception as e:
+                        print(e)
                     continue
 
         # Mana Regen, for both player and Enchanter
@@ -1020,6 +1038,8 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+                    print("Game exiting")
+                    running = False
                     pygame.quit()
                     return False
 
@@ -1036,7 +1056,10 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     player_HP -= e.attack
                     e.hp = 0
                 if e.hp <= 0:
-                    enemy.remove(e)
+                    try:
+                        enemy.remove(e)
+                    except Exception as e:
+                        print(e)
                     continue
 
             if player_HP <= 0:

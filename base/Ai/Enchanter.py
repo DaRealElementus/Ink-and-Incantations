@@ -47,7 +47,7 @@ def target(controlled: list, targets: list, gens: list, player_hp: int, enchante
         # Default behavior: attack player or target random enemy units
         if len(targets) > 0:
             Targeted = random.choice(targets)
-            unit.target = [Targeted.x, Targeted.y]
+            unit.target = Targeted
         else:
             # If no targets, attack player's base
             unit.target = player_base

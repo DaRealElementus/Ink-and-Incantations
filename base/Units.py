@@ -15,6 +15,8 @@ class Unit:
         self.true_y = self.x
         self.target = [0, 0]
         self.lifetime = 0
+        self.Goal = 'None'
+        self.achived = True
         self.spawn_timer = 0
         self.move_timer = 0  # Initialize move timer for all units
         self.Asset = pygame.image.load(os.path.join("Assets", "Sprites", "unit_sprites", "Footman.png"))
@@ -33,17 +35,32 @@ class Unit:
             new_y = self.true_y
 
             scale_x, scale_y = Scalars[0], Scalars[1]
+            
+            if type(self.target) == object:
+                target = [self.target.x, self.target.y]
+            elif type(self.target) == list: 
+                target = self.target
+            else:
+                target = [self.x, self.y]
+
 
             # Adjust movement speed based on delta time
-            if self.target[0] >= self.x:
+            if target[0] >= self.x:
                 new_x += abs(self.speed * (dt * 4) * scale_x)
-            elif self.target[0] < self.x:
+            elif target[0] < self.x:
                 new_x -= abs(self.speed * (dt * 4) * scale_x)
 
-            if self.target[1] >= self.y:
+            if target[1] >= self.y:
                 new_y += abs(self.speed * (dt * 4) * scale_y)
-            elif self.target[1] < self.y:
+            elif target[1] < self.y:
                 new_y -= abs(self.speed * (dt * 4) * scale_y)
+
+            # goal flag update
+
+            if int(self.new_y) == target[1] and int(self.new_x) == target[0]:
+                self.achived = True
+                self.Goal = 'None'
+
 
             # Check for collisions with other units in the team
             collision = False

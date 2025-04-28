@@ -124,7 +124,7 @@ if __name__ == "__main__" and os.path.dirname(__file__) == os.getcwd():
         'beat_enchanter_first_time': False, 
         'music': True,
         'hScore': 0,
-        'GameVersion': "0.8.5",
+        'GameVersion': "0.8.6",
         'modded': (False if os.getcwd().split('\\')[-1] == 'base' else True),
     }
     encode_save_file(data)
