@@ -1,7 +1,6 @@
 # pip installed/default libs
 import time, os, multiprocessing, ctypes
 import Units, Combat
-import requests
 
 #pip install/imported libs
 # auto pip install if missing
@@ -10,6 +9,7 @@ try:
     from pygame.locals import *
     from pypresence import Presence, exceptions
     import SaveUpdater
+    import requests
 except ImportError:
     try:
         os.system("pip install -r requirements.txt") if os.name == "nt" else os.system("pip3 install -r requirements.txt")
@@ -63,7 +63,7 @@ def render_wrapped_text(surface, text, font, color, alpha, rect, line_spacing=5)
         y_offset += font.size(line)[1] + line_spacing
 
 # check for update
-VERSION = "0.8.7"
+VERSION = "0.8.8"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/DaRealElementus/Ink-and-Incantations/refs/heads/main/base/Version.txt"  # URL to the version file on GitHub
 def check_for_update():
     try:

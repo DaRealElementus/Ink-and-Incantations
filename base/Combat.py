@@ -629,7 +629,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                         endselect = (blotx[-1], bloty[-1])
                         selected = []
                         for f in friendly:
-                            if startselect[0] <= f.x <= endselect[0] and startselect[1] <= f.y <= endselect[1]:
+                            if startselect[0] <= f.x <= endselect[0] and startselect[1] <= f.y <= endselect[1] and f.__class__.__name__ != 'Generator':
                                     selected.append(f)
                             # #print(f"Selection from {startselect} to {endselect}")
                             # #print(f"Selected units: {selected}")
@@ -655,7 +655,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                 clamped_x = max(X_MIN, min(pos[0], X_MAX))
                 clamped_y = max(Y_MIN, min(pos[1], Y_MAX))
                 pos = (clamped_x, clamped_y)
-                mouseinkblots.append([pos, 255, 100, random.choice(range(0, 360, 45))])
+                mouseinkblots.append([pos, 255, 100, random.choice(range(0, 360, 15))])
 
         gameDisplay.blit(BattleGround, BattleGround_pos)
         # putting the inkblots on the field
@@ -898,7 +898,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
 
 
         for s in selected:
-            if s.hp > 0:
+            if s in friendly:
                 gameDisplay.blit(selection_icon, (s.x, s.y))
             else:
                 try:
