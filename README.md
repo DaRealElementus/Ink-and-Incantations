@@ -12,7 +12,6 @@
 - [Credits](#credits)
 
 ## Introduction
-=======
 Dive into this new world taking place in the pages of a book, battling the Enchanter, Madman and the Monarch
 
 ## Opponents
