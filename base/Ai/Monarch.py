@@ -2,7 +2,7 @@
 
 import random, pygame
 
-def target(controlled:list, targets:list, gens:list, player_hp:int, enchanter_hp:int) -> None:
+def target(controlled: list, targets: list, gens: list, player_hp: int, enchanter_hp: int, player_base: list, monarch_base: list) -> None:
     """
     Updates every enemy troop with a target based on the game state
     """
@@ -20,6 +20,9 @@ def target(controlled:list, targets:list, gens:list, player_hp:int, enchanter_hp
     patrollers_assigned = 0
 
     for unit in controlled:
+        if unit.__class__.__name__ == "Minion":
+            unit.target = unit.master.target
+            continue
         # Prioritize capturing Generator points if not controlled
         if p_e_controlled < len(gens):
             if unit.__class__.__name__ != "Generator":
@@ -41,20 +44,23 @@ def target(controlled:list, targets:list, gens:list, player_hp:int, enchanter_hp
             if unit.__class__.__name__ != "Generator":
                 # Randomly choose to patrol or defend core
                 if random.choice([True, False]):
-                    # Patrol around the base
-                    unit.target = [random.randint(900, 1030), random.randint(150, 220)]
+                    # Patrol around the monarch base
+                    unit.target = [
+                        random.randint(monarch_base[0] - 50, monarch_base[0] + 50),
+                        random.randint(monarch_base[1] - 50, monarch_base[1] + 50)
+                    ]
                 else:
                     # Defend core
-                    unit.target = [966, 185]
+                    unit.target = monarch_base
                 patrollers_assigned += 1
             continue
 
         # Default behavior: defend own base
-        unit.target = [966, 185]
+        unit.target = monarch_base
 
-def summon(mana:int, p_e_controlled:int, controlled:list) -> None:
+def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
     """
-    Returns the id of the troop the Ai wants to summon
+    Returns the id of the troop the AI wants to summon
     """
     # Define the units and their mana costs
     units = [
@@ -86,7 +92,7 @@ def summon(mana:int, p_e_controlled:int, controlled:list) -> None:
     affordable_units = [unit for unit in units if unit['cost'] <= mana and unit_counts[unit['id']] < 10]
 
     if not affordable_units:
-        print("Insufficient mana to summon any unit")
+        #print("Insufficient mana to summon any unit")
         return None
 
     # Choose a unit to summon based on the adjusted weights
@@ -98,5 +104,5 @@ def summon(mana:int, p_e_controlled:int, controlled:list) -> None:
         if choice <= cumulative_weight:
             return unit['id']
 
-    print("Choice failed")
+    #print("Choice failed")
     return None

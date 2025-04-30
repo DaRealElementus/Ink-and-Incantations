@@ -1,2 +1,0 @@
-pygame==2.6.1
-pypresence==4.3.0
