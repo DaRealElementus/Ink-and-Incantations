@@ -1,6 +1,5 @@
 # Ink and Incantation
 ## Table of Contents
-- [CMUB](#community-made-updates-branch)
 - [Introduction](#introduction)
 - [Opponents](#opponents)
   - [Enchanter](#enchanter)
@@ -12,12 +11,6 @@
 - [Resetting Your Save](#resetting-your-save)
 - [Credits](#credits)
 
-
-## Community Made Updates Branch
-This is a Branch for Community made modifications, As this isnt being sold there is no monetary gain for posting Code here.<br>
-This Branch is open for everyone to PR into, and is welcoming of new and experienced programmers alike.<br>
-Feedback is welcome but must be constructive.<br>
-- Elementus
 ## Introduction
 =======
 Dive into this new world taking place in the pages of a book, battling the Enchanter, Madman and the Monarch
@@ -58,7 +51,6 @@ Run SaveUpdater.py to reset your save file
 ## Credits
 - **Director, Developer, and Artist**: Elementus
 - **ModLoader Developer and Mod Spearhead**: Liam (Typhoonz0)
-- **Modifications**: You guys! <br>
 - **Music**:
   - [DeusLower](https://www.youtube.com/@DeusLower)
   - [Erang](https://www.youtube.com/channel/UC0xBatTv8HbChLQukeerUCg)
