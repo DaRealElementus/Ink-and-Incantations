@@ -19,7 +19,6 @@ This Branch is open for everyone to PR into, and is welcoming of new and experie
 Feedback is welcome but must be constructive.<br>
 - Elementus
 ## Introduction
-=======
 Dive into this new world taking place in the pages of a book, battling the Enchanter, Madman and the Monarch
 
 ## Opponents
