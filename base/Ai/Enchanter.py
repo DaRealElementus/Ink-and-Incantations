@@ -43,7 +43,11 @@ def target(controlled: list, targets: list, gens: list, player_hp: int, enchante
                 random.randint(enchanter_base[1] - 50, enchanter_base[1] + 50)
             ]
             continue
-
+        
+        for t in targets:
+            if t.target == enchanter_base:
+                unit.target = t
+                continue
         # Default behavior: attack player or target random enemy units
         if len(targets) > 0:
             Targeted = random.choice(targets)

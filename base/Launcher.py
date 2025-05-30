@@ -1,6 +1,8 @@
 # pip installed/default libs
 import time, os, multiprocessing, ctypes
 import Units, Combat
+import SaveUpdater
+import random
 
 #pip install/imported libs
 # auto pip install if missing
@@ -8,11 +10,10 @@ try:
     import pygame
     from pygame.locals import *
     from pypresence import Presence, exceptions
-    import SaveUpdater
     import requests
 except ImportError:
     try:
-        os.system("pip install -r requirements.txt") if os.name == "nt" else os.system("pip3 install -r requirements.txt")
+        (os.system("pip install -r requirements.txt") if os.name == "nt" else os.system("pip3 install -r requirements.txt --break-system-packages")) if input("Missing Libaries, force install them? (this will use --b-s-p on linux): (Y/N) ").upper() == "Y" else quit()
     except Exception as e:
         pass
         #print(f"Failed to install dependencies: {e}")
@@ -27,43 +28,8 @@ def get_physical_screen_resolution():
     height = user32.GetSystemMetrics(1)
     return width, height
 
-def render_wrapped_text(surface, text, font, color, alpha, rect, line_spacing=5):
-    """
-    Render text that wraps within a given rectangle.\n
-    :param surface: The Pygame surface to render the text on.
-    :param text: The text to render.
-    :param font: The Pygame font object.
-    :param color: The color of the text.
-    :param rect: A pygame.Rect defining the area to wrap the text in.
-    :param line_spacing: Spacing between lines of text.
-    """
-    words = text.split(' ')
-    lines = []
-    current_line = []
-
-    for word in words:
-        # Check if adding the word exceeds the width of the rect
-        test_line = ' '.join(current_line + [word])
-        if font.size(test_line)[0] <= rect.width:
-            current_line.append(word)
-        else:
-            lines.append(' '.join(current_line))
-            current_line = [word]
-
-    # Add the last line
-    if current_line:
-        lines.append(' '.join(current_line))
-
-    # Render each line
-    y_offset = rect.top
-    for line in lines:
-        line_surface = font.render(line, True, color)
-        line_surface.set_alpha(alpha)
-        surface.blit(line_surface, (rect.left, y_offset))
-        y_offset += font.size(line)[1] + line_spacing
-
 # check for update
-VERSION = "0.8.8"
+VERSION = "0.9.0"
 GITHUB_VERSION_URL = "https://raw.githubusercontent.com/DaRealElementus/Ink-and-Incantations/refs/heads/main/base/Version.txt"  # URL to the version file on GitHub
 def check_for_update():
     try:
@@ -125,13 +91,14 @@ def connect_rpc(client_id):
         return RPC, success_flag.value
 
 
-def incompat_save(save_data: dict):
+def incompat_save(save_data: dict, scale_y: float = 1.0) -> tuple:
     """
     checks when the save file is corrupted or incompatible with version or mods
     """
+    title_font_size = int(scale_y * 60)
     try:
         error = False
-        font = pygame.font.Font(os.path.join("Assets", "Fonts", "Books-Vhasenti.ttf"), 50)
+        font = pygame.font.Font(os.path.join("Assets", "Fonts", "Books-Vhasenti.ttf"), title_font_size)
         text = font.render("Save file is passed", True, (255, 0, 0))
         if save_data is None:
             text = font.render("Save file is corrupted", True, (255, 0, 0))
@@ -177,11 +144,13 @@ if __name__ == "__main__":
     #print(scale_x, scale_y)
     #print(screen_width, screen_height)
     # Initialize display
+    icon = pygame.image.load(os.path.join("Assets", "Icon.png"))
+    pygame.display.set_icon(icon)
     gameDisplay = pygame.display.set_mode((screen_width, screen_height), flags)
     pygame.display.set_caption('Ink and Incantations')
     gameDisplay.fill((0, 0, 0))
 
-    savecompat = incompat_save(SaveUpdater.decode_save_file())
+    savecompat = incompat_save(SaveUpdater.decode_save_file(), scale_y)
     if savecompat[0]:
         gameDisplay.fill((0, 0, 0))
         gameDisplay.blit(savecompat[1], savecompat[1].get_rect(center=(screen_width // 2, screen_height // 2)))
@@ -218,14 +187,14 @@ if __name__ == "__main__":
     
     # Load assets
 
-    icon = pygame.image.load(os.path.join("Assets", "Icon.png"))
+
     menu_background = pygame.image.load(os.path.join("Assets", "Openbook.png"))
     selector = pygame.image.load(os.path.join("Assets", "Selector.jpg"))  # 235x119 size
-    pygame.display.set_icon(icon)
+
 
 
     # Load music
-    music = pygame.mixer.Sound(os.path.join("Assets", "Music", "last-fight-dungeon-synth-music-281592.mp3"))
+    music = pygame.mixer.Sound(os.path.join("Assets", "Music", "Main_"+ random.choice(["1", "2", "3"]) + ".mp3"))
     music.set_volume(1 if SaveUpdater.decode_save_file()['music'] else 0)  # Set volume based on saved state
     music.play(-1)  # Loop the music indefinitely
 
@@ -303,11 +272,11 @@ if __name__ == "__main__":
     for i in range(255):
         gameDisplay.fill((0, 0, 0))
         a += 1
-        render_wrapped_text(gameDisplay, warning, TitleFont, (255, 0, 0), a, pygame.Rect(screen_width * 0.025, screen_height * 0.4, screen_width * 0.95, screen_height * 0.2), line_spacing=5)
+        Combat.render_wrapped_text(gameDisplay, warning, TitleFont, (255, 0, 0), a, pygame.Rect(screen_width * 0.025, screen_height * 0.4, screen_width * 0.95, screen_height * 0.2), line_spacing=5)
         pygame.display.update()
 
     gameDisplay.fill((0, 0, 0))
-    render_wrapped_text(gameDisplay, warning, TitleFont, (255, 0, 0), a, pygame.Rect(screen_width * 0.025, screen_height * 0.4, screen_width * 0.95, screen_height * 0.2), line_spacing=5)
+    Combat.render_wrapped_text(gameDisplay, warning, TitleFont, (255, 0, 0), a, pygame.Rect(screen_width * 0.025, screen_height * 0.4, screen_width * 0.95, screen_height * 0.2), line_spacing=5)
     pygame.display.update()
     skip = False
     for i in range(4000):
@@ -321,7 +290,7 @@ if __name__ == "__main__":
     for i in range(255):
         gameDisplay.fill((0, 0, 0))
         a -= 1
-        render_wrapped_text(gameDisplay, warning, TitleFont, (255, 0, 0), a, pygame.Rect(screen_width * 0.025, screen_height * 0.4, screen_width * 0.95, screen_height * 0.2), line_spacing=5)
+        Combat.render_wrapped_text(gameDisplay, warning, TitleFont, (255, 0, 0), a, pygame.Rect(screen_width * 0.025, screen_height * 0.4, screen_width * 0.95, screen_height * 0.2), line_spacing=5)
   
         pygame.display.update()
 
@@ -352,6 +321,8 @@ if __name__ == "__main__":
     hover_monarch = False
     hover_madman = False
     ai = 'enchanter'
+    pygame.event.clear()
+
 
     while running:
         if Connect:
@@ -407,11 +378,15 @@ if __name__ == "__main__":
                         play.set_alpha(a)
                         _quit.set_alpha(a)
                         menu_background.set_alpha(a)
+                        Audio.set_alpha(a)
+                        update.set_alpha(a)
                         selector.set_alpha(a)
                         gameDisplay.blit(menu_background, menu_background_rect.topleft)
                         gameDisplay.blit(selector, selector_rect.topleft)
                         gameDisplay.blit(title, title_rect.topleft)
                         gameDisplay.blit(play, play_rect.topleft)
+                        gameDisplay.blit(Audio, AudioMuteRect.topleft)
+                        gameDisplay.blit(update, update_rect.topleft)
                         gameDisplay.blit(_quit, quit_rect.topleft)
                         pygame.time.delay(1)
                         pygame.display.update()
@@ -420,9 +395,8 @@ if __name__ == "__main__":
                     while Again:
                         music.stop()
                         gameDisplay.fill((0, 0, 0))
-                        Again = Combat_loader.BatStart(ai, gameDisplay, Connect, RPC, pid, Unit_loader, SaveUpdater, [scale_x, scale_y], [screen_width, screen_height], render_wrapped_text)
-                    running = False
-
+                        Again = Combat_loader.BatStart(ai, gameDisplay, Connect, RPC, pid, Unit_loader, SaveUpdater, [scale_x, scale_y], [screen_width, screen_height], Combat.render_wrapped_text)    
+                    music = pygame.mixer.Sound(os.path.join("Assets", "Music", "Main_"+ random.choice(["1", "2", "3"]) + ".mp3"))
                 # QUIT button
                 elif quit_rect.collidepoint(event.pos):
                     running = False

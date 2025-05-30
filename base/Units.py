@@ -25,65 +25,46 @@ class Unit:
         return "a unit of type " + self.__class__.__name__ + " with " + str(self.hp) + " HP and " + str(self.attack) + " attack at " + str(self.x) + " " + str(self.y) + " with a target of " + str(self.target) + " and a cost of " + str(self.cost) + " and a speed of " + str(self.speed)
     
 
-    def move(self, dt: float, team: list, boundaries: list, Scalars: list) -> None:
-        """
-        Move the troop towards its target, adjusted for delta time.
-        Ensures movement is in whole-pixel increments.
-        """
+    def move(self, dt: float, team: list, boundaries: dict, Scalars: list) -> None:
         if self.__class__.__name__ != "Generator":
-            new_x = self.true_x
-            new_y = self.true_y
+            new_x, new_y = self.true_x, self.true_y
             scale_x, scale_y = Scalars[0], Scalars[1]
+            speed_factor = dt * 4
+
+            # Determine target
             if isinstance(self.target, Unit):
                 target = [self.target.x, self.target.y]
-            elif type(self.target) in [list, tuple]: 
+            elif isinstance(self.target, (list, tuple)):
                 target = self.target
             else:
                 target = [self.x, self.y]
 
+            # Adjust movement speed
+            dx = abs(random.randint(1, self.speed) * speed_factor * scale_x)
+            dy = abs(random.randint(1, self.speed) * speed_factor * scale_y)
 
-            # Adjust movement speed based on delta time
             if target[0] >= self.x:
-                new_x += abs((random.randint(1, self.speed)) * (dt * 4) * scale_x)
-            elif target[0] < self.x:
-                new_x -= abs((random.randint(1, self.speed)) * (dt * 4) * scale_x)
+                new_x += dx
+            else:
+                new_x -= dx
 
             if target[1] >= self.y:
-                new_y += abs((random.randint(1, self.speed)) * (dt * 4) * scale_y)
-            elif target[1] < self.y:
-                new_y -= abs((random.randint(1, self.speed)) * (dt * 4) * scale_y)
+                new_y += dy
+            else:
+                new_y -= dy
 
-            # goal flag update
-            if int(new_y) == target[1] and int(new_x) == target[0]:
-                self.achived = True
-                self.Goal = 'None'
+            # Check for collisions
+            collision = any(t.true_x == new_x and t.true_y == new_y for t in team if t is not self)
 
-
-            # Check for collisions with other units in the team
-            collision = False
-            for t in team:
-                if t is self:
-                    continue
-                if t.true_x == new_x and t.true_y == new_y:
-                    collision = True
-                    break
             # Update position if no collision
             if not collision:
-                self.true_x = new_x
-                self.true_y = new_y
+                self.true_x, self.true_y = new_x, new_y
 
             # Ensure the unit stays within bounds
-            if self.true_x > boundaries["right"]:
-                self.true_x = boundaries["right"]
-            elif self.true_x < boundaries["left"]:
-                self.true_x = boundaries["left"]
-            if self.true_y > boundaries["bottom"]:
-                self.true_y = boundaries["bottom"]
-            elif self.true_y < boundaries["top"]:
-                self.true_y = boundaries["top"]
-                
-            self.x = int(self.true_x)
-            self.y = int(self.true_y)
+            self.true_x = max(boundaries["left"], min(boundaries["right"], self.true_x))
+            self.true_y = max(boundaries["top"], min(boundaries["bottom"], self.true_y))
+
+            self.x, self.y = int(self.true_x), int(self.true_y)
 
 
 # Subclasses with specific costs

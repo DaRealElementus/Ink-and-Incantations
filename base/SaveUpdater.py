@@ -2,15 +2,21 @@ import os
 import json
 import hmac
 import hashlib
-from Crypto.Cipher import AES
-from Crypto.Random import get_random_bytes
-
+try:
+    from Crypto.Cipher import AES
+    from Crypto.Random import get_random_bytes
+except ImportError:
+    try:
+        os.system("pip install -r requirements.txt") if os.name == "nt" else os.system("pip3 install -r requirements.txt")
+    except Exception as e:
+        pass
+        #print(f"Failed to install dependencies: {e}")
 # ---- CONFIG ----
 AES_KEY = b"0123456789abcdef0123456789abcdef" # 32 bytes for AES-256
 HMAC_SECRET = b"MySuperSecretHMACKey"            # Secret for tamper check
 SAVE_FILE_PATH = os.path.join("Saves", "save.bin")
 
-# ---- HELPERS ----
+# ---- HELPERS ---- 
 def pad(data):
     """
     Pad the data to be a multiple of 16 bytes using PKCS#7 padding.
@@ -60,12 +66,18 @@ def encode_save_file(save_data=None):
 
     if not save_data:
         save_data = {
-            'enchanter': False,
-            'monarch': False,
-            'madman': False,
-            'tutorial': False,
-            'beat_enchanter_first_time': False
-        }
+        'enchanter': False,
+        'monarch': False,
+        'madman': False,
+        'tutorial': False,
+        'beat_enchanter_first_time': False, 
+        'music': True,
+        'hScore': 0,
+        'GameVersion': "0.9.0",
+        'modded': (False if os.getcwd().split('\\')[-1] == 'base' else True),
+    }
+    
+    save_data['modded'] = False if os.getcwd().split('\\')[-1] == 'base' else True
 
     # Serialize to JSON
     json_data = json.dumps(save_data).encode('utf-8')
@@ -124,7 +136,7 @@ if __name__ == "__main__" and os.path.dirname(__file__) == os.getcwd():
         'beat_enchanter_first_time': False, 
         'music': True,
         'hScore': 0,
-        'GameVersion': "0.8.8",
+        'GameVersion': "0.9.0",
         'modded': (False if os.getcwd().split('\\')[-1] == 'base' else True),
     }
     encode_save_file(data)
