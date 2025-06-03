@@ -425,9 +425,6 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
     t_x = player_base[0]
     t_y = player_base[1] - (BattleGround_height * 0.2)
 
-
-    move_rate = BattleGround_width // 400
-
     pygame.event.clear()
 
     if not SaveUpdater.decode_save_file()['tutorial']:
