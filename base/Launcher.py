@@ -78,7 +78,7 @@ def connect_rpc(client_id):
     success_flag = multiprocessing.Value('b', False)  # Shared boolean value
     process = multiprocessing.Process(target=try_connect, args=(client_id, success_flag))
     process.start()
-    process.join(timeout=5)  # Wait for max 5 seconds
+    process.join(timeout=1)  # Wait for max 5 seconds
 
     if not success_flag.value:
         #print("Connection timed out. Skipping...")

@@ -329,7 +329,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
             gameDisplay.blit(Begin, Bloc)
         pygame.display.flip()
 
-        clock.tick(60)
+        clock.tick()
         skip = False
         if i != 2 or i != 0:
             for i in range(4000):
@@ -459,7 +459,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
 
             while not skip:
                 frame += 1
-                clock.tick(60)  # Limit the frame rate to 60 FPS
+                clock.tick()  # Limit the frame rate to 60 FPS
                 gameDisplay.fill((0, 0, 0))  # Clear the screen
                 gameDisplay.blit(BattleGround, BattleGround_pos)  # Redraw the background
 
@@ -574,13 +574,11 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
         )
     # Main game loop
     running = True
-    frame_counter = 0
     while running:
         # Calculate delta time
         current_time = time.time()
         dt = current_time - last_time
         last_time = current_time
-        frame_counter += 1
 
 
         # Event handling
@@ -711,7 +709,6 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                     clamped_y = max(Y_MIN, min(pos[1], Y_MAX))
                     pos = (clamped_x, clamped_y)
                     mouseinkblots.append([pos, 255, 100, random.choice(range(0, 360, 15))])
-                frame_counter = 0
         # putting the inkblots on the field
 
         gameDisplay.fill((0, 0, 0))
@@ -1036,7 +1033,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
 
 
         pygame.display.flip()
-        clock.tick(60)
+        clock.tick()
 
 
     
@@ -1218,7 +1215,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
             gameDisplay.blit(cursor_img, pygame.mouse.get_pos())
 
             pygame.display.flip()
-            clock.tick(60)
+            clock.tick()
 
         Loss_1 = SpeechFont.render('All you need to do is learn…', True, (255, 150, 255))
         Loss_2 = SpeechFont.render('Again.', True, (255, 150, 255))
