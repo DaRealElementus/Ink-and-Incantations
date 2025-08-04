@@ -1,4 +1,4 @@
-# Ink and Incantation
+# Ink and Incantation: Cards Of Chaos DLC
 ## Table of Contents
 - [Introduction](#introduction)
 - [Opponents](#opponents)
@@ -12,34 +12,21 @@
 - [Credits](#credits)
 
 ## Introduction
-Dive into this new world taking place in the pages of a book, battling the Enchanter, Madman and the Monarch
 
-## Opponents
-![A Image of the Opponents](base/Assets/Selector.jpg)
-### Enchanter
-Your first opponent <br>
-His quick thinking makes him a Formidable Foe, by far the smartest although he only serves to teach<br>
-But the hand that guides is the first to turn its back.
-
-### Monarch
-Your second opponent<br>
-She lives to serve her people, only attacking when provoked, she sees the book as a game, without understanding the consequences<br>
-Failure to entertain will only result in your death.
-
-### Madman
-Your Final opponent<br>
-Locked away for years, he hears the world around him tick, like a clock.<br>
-And the veil has broken
+The battles are over, youve defeated the Enchanter, the Monarch, and the Madman <br> <br>
+But he left a gift... <br>
+A deck of cards and an everchanging mirror, face the old foes, with stronger magic until the mirror concedes.
 
 ## Setup
 
 ### Prerequisites
 - Ensure you have Python installed (originally built with Python 3.11.9).
+- Ink and Incantations Base game.
 - Add Python to your system's PATH during installation.
 
-### Modding
-- Drag and Drop your selected mod into the mods folder
-- you will be prompted what version of I&I you wish to play when you run the game
+### Installing
+- Drag and Drop the mod into the mods folder
+- you will be prompted what version of I&I you wish to play when you run the game, Select Cards Of Chaos.
 - Mods can be found [here](https://xliam.space/iaimods.html), Thanks Liam!
 
 on your first time running, I reccomend running SaveUpdater.py to ensure your save file is fresh
