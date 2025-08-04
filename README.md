@@ -1,40 +1,18 @@
-# Ink and Incantation
+# Ink and Incantation: Online Mode
 ## Table of Contents
-- [Introduction](#introduction)
-- [Opponents](#opponents)
-  - [Enchanter](#enchanter)
-  - [Monarch](#monarch)
-  - [Madman](#madman)
 - [Setup](#setup)
   - [Prerequisites](#prerequisites)
   - [Mods](#modding)
 - [Resetting Your Save](#resetting-your-save)
 - [Credits](#credits)
 
-## Introduction
-Dive into this new world taking place in the pages of a book, battling the Enchanter, Madman and the Monarch
-
-## Opponents
-![A Image of the Opponents](base/Assets/Selector.jpg)
-### Enchanter
-Your first opponent <br>
-His quick thinking makes him a Formidable Foe, by far the smartest although he only serves to teach<br>
-But the hand that guides is the first to turn its back.
-
-### Monarch
-Your second opponent<br>
-She lives to serve her people, only attacking when provoked, she sees the book as a game, without understanding the consequences<br>
-Failure to entertain will only result in your death.
-
-### Madman
-Your Final opponent<br>
-Locked away for years, he hears the world around him tick, like a clock.<br>
-And the veil has broken
 
 ## Setup
+You will be prompted to Select a server while in development
 
 ### Prerequisites
 - Ensure you have Python installed (originally built with Python 3.11.9).
+- Have the base version of Ink and Incantations installed
 - Add Python to your system's PATH during installation.
 
 ### Modding
