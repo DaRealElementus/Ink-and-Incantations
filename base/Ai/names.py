@@ -1911,6 +1911,7 @@ names = [
     'Harland',
     'Harley',
     'Harmony',
+    'Harper',
     'Harold',
     'Harriet',
     'Harriett',
@@ -3685,6 +3686,7 @@ names = [
     'Nelly',
     'Nelson',
     'Nena',
+    'Nemika'
     'Nenita',
     'Neoma',
     'Neomi',
@@ -4386,9 +4388,6 @@ names = [
     'Shavon',
     'Shavonda',
     'Shavonne',
-    'Shawana',
-    'Shawanda',
-    'Shawanna',
     'Shawn',
     'Shawna',
     'Shawnda',
@@ -4437,9 +4436,6 @@ names = [
     'Sherley',
     'Sherly',
     'Sherlyn',
-    'Sherman',
-    'Sheron',
-    'Sherrell',
     'Sherri',
     'Sherrie',
     'Sherril',
@@ -4496,6 +4492,7 @@ names = [
     'Siu',
     'Sixta',
     'Skye',
+    'Skibidi'
     'Slyvia',
     'So',
     'Socorro',
@@ -5166,4 +5163,25 @@ names = [
     'Zula',
     'Zulema',
     'Zulma',
+    'Aria',   # After 'Arica'
+    'Atlas',  # After 'Atilano'
+    'Axel',   # After 'Autumn'
+    'Cairo',  # After 'Caitlyn'
+    'Echo',   # After 'Ebony'
+    'Ezra',   # After 'Ezequiel'
+    'Finn',   # After 'Filiberto'
+    'Harper', # After 'Harmony'
+    'Kai',    # After 'Kacie'
+    'Luna',   # After 'Luigi'
+    'Maven',  # After 'Maurita'
+    'Nova',   # After 'Normand'
+    'Oakley', # After 'Nubia'
+    'Phoenix',# After 'Philomena'
+    'Quinn',  # After 'Quincy'
+    'River',  # After 'Risa'
+    'Sage',   # After 'Sadie'
+    'Scout',  # After 'Scott'
+    'Storm',  # After 'Sterling'
+    'Wren',   # After 'Winter'
+    'Zephyr'  # After 'Zenaida'
 ]

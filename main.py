@@ -1,13 +1,18 @@
 import os
 import subprocess
-import pygame
 import sys
+
+try:
+    import pygame
+except ImportError:
+    
+    (os.system("pip install pygame") if os.name == "nt" else os.system("pip3 install pygame --break-system-packages")) if input("Missing Libaries, force install them? (this will use --b-s-p on linux): (Y/N) ").upper() == "Y" else quit()
 
 """
 Huge thank you to Liam for the idea and the code for this launcher. They wanted to break my game with their cheats, so they made this launcher
 for easier testing and modding. They then provided it to me for free, and I am eternally grateful for that.
 
-For marking, do not mark this code. It is not mine, and I do not want to take credit for it. I am only using it to make my own and everyone else who wants to work on this lives easier easier.
+For marking, do not mark this code. It is not mine, and I do not want to take credit for it. I am only using it to make my own and everyone else who wants to work on this lives easier.
 """
 
 def run_script(script_dir, script_name="Launcher.py"):

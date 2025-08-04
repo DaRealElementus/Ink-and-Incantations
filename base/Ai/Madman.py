@@ -1,6 +1,12 @@
 """Madman Action Handler Class"""
-import random, pygame, os, platform, difflib, Units
+import random
+import pygame
+import os
+import platform
+import difflib
+import Units
 from Ai.names import names
+
 
 def target(controlled: list, targets: list, gens: list, player_hp: int, madman_hp: int, player_base: list, madman_base: list) -> None:
     """
@@ -8,6 +14,13 @@ def target(controlled: list, targets: list, gens: list, player_hp: int, madman_h
     """
     for unit in controlled:
         # Randomly decide whether to move or stay
+        if unit.__class__.__name__ == "Minion":
+            unit.target = unit.master.target
+            continue
+        if unit.__class__.__name__ == "Generator":
+            # If the unit is a generator, it should not have a target
+            unit.target = None
+            continue
         if random.choice([True, False]):
             # Randomly choose a target from generators, enemy units, or player's base
             choices = []
@@ -17,16 +30,16 @@ def target(controlled: list, targets: list, gens: list, player_hp: int, madman_h
                 choices.extend(targets)
 
             # Add player's base as a potential target
-            choices.append({'x': player_base[0], 'y': player_base[1]})
-
+            choices.append(player_base)
             Targeted = random.choice(choices)
-            unit.target = [Targeted['x'], Targeted['y']]
+            unit.target = Targeted
         else:
             # Randomly move to a random position near the madman base
             unit.target = [
                 random.randint(madman_base[0] - 100, madman_base[0] + 100),
                 random.randint(madman_base[1] - 100, madman_base[1] + 100)
             ]
+
 
 def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
     """
@@ -46,11 +59,14 @@ def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
     affordable_units = [unit for unit in units if unit['cost'] <= mana]
 
     if not affordable_units:
-        #print("Insufficient mana to summon any unit")
+        # print("Insufficient mana to summon any unit")
+        return None
+    if len(controlled) <= 100:
+        chosen_unit = random.choice(affordable_units)
+        return chosen_unit['id']
+    else:
         return None
 
-    chosen_unit = random.choice(affordable_units)
-    return chosen_unit['id']
 
 def scare() -> str:
     """
@@ -58,6 +74,16 @@ def scare() -> str:
     """
     try:
         s = os.getlogin()
-        return s.capitalize()
+        # compare the username with the list of names
+        if s in names:
+            return s
+        else:
+            # find the closest match to the username in the list of names
+            closest_match = difflib.get_close_matches(
+                s, names, n=1, cutoff=0.6)
+            if closest_match:
+                return closest_match[0]
+            else:
+                return "Player"
     except Exception:
         return "Player"

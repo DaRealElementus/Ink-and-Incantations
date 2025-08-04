@@ -1,6 +1,5 @@
 # Ink and Incantation
 ## Table of Contents
-- [CMUB](#community-made-updates-branch)
 - [Introduction](#introduction)
 - [Opponents](#opponents)
   - [Enchanter](#enchanter)
@@ -12,12 +11,6 @@
 - [Resetting Your Save](#resetting-your-save)
 - [Credits](#credits)
 
-
-## Community Made Updates Branch
-This is a Branch for Community made modifications, As this isnt being sold there is no monetary gain for posting Code here.<br>
-This Branch is open for everyone to PR into, and is welcoming of new and experienced programmers alike.<br>
-Feedback is welcome but must be constructive.<br>
-- Elementus
 ## Introduction
 Dive into this new world taking place in the pages of a book, battling the Enchanter, Madman and the Monarch
 
@@ -26,17 +19,17 @@ Dive into this new world taking place in the pages of a book, battling the Encha
 ### Enchanter
 Your first opponent <br>
 His quick thinking makes him a Formidable Foe, by far the smartest although he only serves to teach<br>
-The hand that guides is the first to leave
+But the hand that guides is the first to turn its back.
 
 ### Monarch
 Your second opponent<br>
 She lives to serve her people, only attacking when provoked, she sees the book as a game, without understanding the consequences<br>
-failure to entertain will only result in your death
+Failure to entertain will only result in your death.
 
 ### Madman
 Your Final opponent<br>
 Locked away for years, he hears the world around him tick, like a clock.<br>
-The veil breaks
+And the veil has broken
 
 ## Setup
 
@@ -57,10 +50,10 @@ Run SaveUpdater.py to reset your save file
 ## Credits
 - **Director, Developer, and Artist**: Elementus
 - **ModLoader Developer and Mod Spearhead**: Liam (Typhoonz0)
-- **Modifications**: You guys! <br>
 - **Music**:
   - [DeusLower](https://www.youtube.com/@DeusLower)
   - [Erang](https://www.youtube.com/channel/UC0xBatTv8HbChLQukeerUCg)
     - *Check out their amazing work!*
+    - *message me if you have any issues with your music.*
 - **Status**: This game is a work in progress and is part of an assessment item.
 - **Contributions**: Please make pushes to the `community-made-updates` branch.

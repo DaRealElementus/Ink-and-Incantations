@@ -1,7 +1,9 @@
 """Enchanter Action Handler Class"""
 
 
-import random, pygame
+import random
+import pygame
+
 
 def target(controlled: list, targets: list, gens: list, player_hp: int, enchanter_hp: int, player_base: list, enchanter_base: list) -> None:
     """
@@ -14,7 +16,8 @@ def target(controlled: list, targets: list, gens: list, player_hp: int, enchante
             p_e_controlled += 1
             controlled_gens.append(e)
 
-    num_defenders = max(1, len(controlled) // 3)  # Assign one-third of the units to defense, at least one unit
+    # Assign one-third of the units to defense, at least one unit
+    num_defenders = max(1, len(controlled) // 3)
     defenders_assigned = 0
 
     for unit in controlled:
@@ -44,6 +47,10 @@ def target(controlled: list, targets: list, gens: list, player_hp: int, enchante
             ]
             continue
 
+        for t in targets:
+            if t.target == enchanter_base:
+                unit.target = t
+                continue
         # Default behavior: attack player or target random enemy units
         if len(targets) > 0:
             Targeted = random.choice(targets)
@@ -51,6 +58,7 @@ def target(controlled: list, targets: list, gens: list, player_hp: int, enchante
         else:
             # If no targets, attack player's base
             unit.target = player_base
+
 
 def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
     """
@@ -84,10 +92,11 @@ def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
                 unit['weight'] += 3
 
     # Filter units that can be summoned with the available mana
-    affordable_units = [unit for unit in units if unit['cost'] <= mana and unit_counts[unit['id']] < 5]
+    affordable_units = [unit for unit in units if unit['cost']
+                        <= mana and unit_counts[unit['id']] < 5]
 
     if not affordable_units:
-        #print("Insufficient mana to summon any unit")
+        # print("Insufficient mana to summon any unit")
         return None
 
     # Choose a unit to summon based on the adjusted weights
@@ -99,5 +108,5 @@ def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
         if choice <= cumulative_weight:
             return unit['id']
 
-    #print("Choice failed")
+    # print("Choice failed")
     return None
