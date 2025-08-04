@@ -7,16 +7,19 @@ try:
     from Crypto.Random import get_random_bytes
 except ImportError:
     try:
-        os.system("pip install -r requirements.txt") if os.name == "nt" else os.system("pip3 install -r requirements.txt")
+        os.system("pip install -r requirements.txt") if os.name == "nt" else os.system(
+            "pip3 install -r requirements.txt")
     except Exception as e:
         pass
-        #print(f"Failed to install dependencies: {e}")
+        # print(f"Failed to install dependencies: {e}")
 # ---- CONFIG ----
-AES_KEY = b"0123456789abcdef0123456789abcdef" # 32 bytes for AES-256
+AES_KEY = b"0123456789abcdef0123456789abcdef"  # 32 bytes for AES-256
 HMAC_SECRET = b"MySuperSecretHMACKey"            # Secret for tamper check
 SAVE_FILE_PATH = os.path.join("Saves", "save.bin")
 
-# ---- HELPERS ---- 
+# ---- HELPERS ----
+
+
 def pad(data):
     """
     Pad the data to be a multiple of 16 bytes using PKCS#7 padding.
@@ -24,12 +27,14 @@ def pad(data):
     pad_len = 16 - len(data) % 16
     return data + bytes([pad_len] * pad_len)
 
+
 def unpad(data):
     """
     Remove PKCS#7 padding from the data.
     """
     pad_len = data[-1]
     return data[:-pad_len]
+
 
 def encrypt(data_bytes):
     """
@@ -41,6 +46,7 @@ def encrypt(data_bytes):
     encrypted = cipher.encrypt(pad(data_bytes))
     return iv + encrypted  # Prepend IV
 
+
 def decrypt(encrypted_bytes):
     """
     Decrypt the data using AES in CBC mode.
@@ -51,6 +57,7 @@ def decrypt(encrypted_bytes):
     decrypted = cipher.decrypt(encrypted_bytes[16:])
     return unpad(decrypted)
 
+
 def compute_hmac(data):
     """
     Compute the HMAC of the data using SHA-256.
@@ -58,6 +65,8 @@ def compute_hmac(data):
     return hmac.new(HMAC_SECRET, data, hashlib.sha256).digest()
 
 # ---- SAVE/LOAD ----
+
+
 def encode_save_file(save_data=None):
     """
     Save the game state to a file, encrypting and HMACing the data.
@@ -65,19 +74,22 @@ def encode_save_file(save_data=None):
     """
 
     if not save_data:
+        with open("version.txt", 'r') as f:
+            version = f.read().strip()
         save_data = {
-        'enchanter': False,
-        'monarch': False,
-        'madman': False,
-        'tutorial': False,
-        'beat_enchanter_first_time': False, 
-        'music': True,
-        'hScore': 0,
-        'GameVersion': "0.9.0",
-        'modded': (False if os.getcwd().split('\\')[-1] == 'base' else True),
-    }
-    
-    save_data['modded'] = False if os.getcwd().split('\\')[-1] == 'base' else True
+                'enchanter': False,
+                'monarch': False,
+                'madman': False,
+                'tutorial': False,
+                'beat_enchanter_first_time': False,
+                'music': True,
+                'hScore': 0,
+                'GameVersion': version,
+                'modded': (False if os.getcwd().split('\\')[-1] == 'base' else True),
+            }
+
+    save_data['modded'] = False if os.getcwd().split(
+        '\\')[-1] == 'base' else True
 
     # Serialize to JSON
     json_data = json.dumps(save_data).encode('utf-8')
@@ -95,6 +107,7 @@ def encode_save_file(save_data=None):
     os.makedirs(os.path.dirname(SAVE_FILE_PATH), exist_ok=True)
     with open(SAVE_FILE_PATH, 'wb') as f:
         f.write(final_data)
+
 
 def decode_save_file():
     """
@@ -125,18 +138,18 @@ def decode_save_file():
         print("Failed to load save:", str(e))
         return None
 
-# ---- DEMO ----
 if __name__ == "__main__" and os.path.dirname(__file__) == os.getcwd():
-    print(os.getcwd().split('\\')[-1])
+    with open("version.txt", 'r') as f:
+        version = f.read().strip()
     data = {
         'enchanter': False,
         'monarch': False,
         'madman': False,
         'tutorial': False,
-        'beat_enchanter_first_time': False, 
+        'beat_enchanter_first_time': False,
         'music': True,
         'hScore': 0,
-        'GameVersion': "0.9.0",
+        'GameVersion': version,
         'modded': (False if os.getcwd().split('\\')[-1] == 'base' else True),
     }
     encode_save_file(data)

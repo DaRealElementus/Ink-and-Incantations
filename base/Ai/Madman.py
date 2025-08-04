@@ -1,6 +1,12 @@
 """Madman Action Handler Class"""
-import random, pygame, os, platform, difflib, Units
+import random
+import pygame
+import os
+import platform
+import difflib
+import Units
 from Ai.names import names
+
 
 def target(controlled: list, targets: list, gens: list, player_hp: int, madman_hp: int, player_base: list, madman_base: list) -> None:
     """
@@ -34,6 +40,7 @@ def target(controlled: list, targets: list, gens: list, player_hp: int, madman_h
                 random.randint(madman_base[1] - 100, madman_base[1] + 100)
             ]
 
+
 def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
     """
     Returns the id of the troop the AI wants to summon
@@ -52,13 +59,14 @@ def summon(mana: int, p_e_controlled: int, controlled: list) -> int:
     affordable_units = [unit for unit in units if unit['cost'] <= mana]
 
     if not affordable_units:
-        #print("Insufficient mana to summon any unit")
+        # print("Insufficient mana to summon any unit")
         return None
     if len(controlled) <= 100:
         chosen_unit = random.choice(affordable_units)
         return chosen_unit['id']
     else:
         return None
+
 
 def scare() -> str:
     """
@@ -71,7 +79,8 @@ def scare() -> str:
             return s
         else:
             # find the closest match to the username in the list of names
-            closest_match = difflib.get_close_matches(s, names, n=1, cutoff=0.6)
+            closest_match = difflib.get_close_matches(
+                s, names, n=1, cutoff=0.6)
             if closest_match:
                 return closest_match[0]
             else:
