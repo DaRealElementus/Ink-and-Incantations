@@ -12,6 +12,7 @@ class Unit:
         self.speed = 1
         self.x = 0
         self.y = 0
+        self.team = None  # Team this unit belongs to
         self.true_x = self.x
         self.true_y = self.x
         self.target = [0, 0]
@@ -19,13 +20,16 @@ class Unit:
         self.Goal = 'None'
         self.achived = True
         self.spawn_timer = 0
+        self.Asset = 32
         self.move_timer = 0  # Initialize move timer for all units
-        self.Asset = pygame.image.load(os.path.join(
-            "Assets", "Sprites", "unit_sprites", "Footman.png"))
-    def Package(self):
         """Package the unit's data for sending over the network"""
         data = vars(self).copy()
-        data['Asset'] = None
+        return data
+    def Package(self, scale=[1, 1]):
+        """Package the unit's data for sending over the network"""
+        data = vars(self).copy()
+        data.update({"Name": self.__class__.__name__})
+        data.update({"Scale": scale})
         return data
     
     def Unpackage(self, data):
@@ -106,10 +110,6 @@ class Footman(Unit):
         self.y = xy[1]
         self.true_x, self.true_y = xy
         self.target = [0, 0]
-        self.Asset = pygame.image.load(os.path.join(
-            "Assets", "Sprites", "unit_sprites", "Footman.png"))
-        self.Asset = pygame.transform.smoothscale(
-            self.Asset, [self.Asset.get_width() * scalar[0], self.Asset.get_height() * scalar[1]])
 
 
 class Horse(Unit):
@@ -125,10 +125,6 @@ class Horse(Unit):
         self.y = xy[1]
         self.true_x, self.true_y = xy
         self.target = [0, 0]
-        self.Asset = pygame.image.load(os.path.join(
-            "Assets", "Sprites", "unit_sprites", "Horse.png"))
-        self.Asset = pygame.transform.smoothscale(
-            self.Asset, [self.Asset.get_width() * scalar[0], self.Asset.get_height() * scalar[1]])
 
 
 class Soldier(Unit):
@@ -144,10 +140,6 @@ class Soldier(Unit):
         self.y = xy[1]
         self.true_x, self.true_y = xy
         self.target = [0, 0]
-        self.Asset = pygame.image.load(os.path.join(
-            "Assets", "Sprites", "unit_sprites", "Soldier.png"))
-        self.Asset = pygame.transform.smoothscale(
-            self.Asset, [self.Asset.get_width() * scalar[0], self.Asset.get_height() * scalar[1]])
 
 
 class Summoner(Unit):
@@ -163,10 +155,7 @@ class Summoner(Unit):
         self.y = xy[1]
         self.true_x, self.true_y = xy
         self.target = [0, 0]
-        self.Asset = pygame.image.load(os.path.join(
-            "Assets", "Sprites", "unit_sprites", "Summoner.png"))
-        self.Asset = pygame.transform.smoothscale(
-            self.Asset, [self.Asset.get_width() * scalar[0], self.Asset.get_height() * scalar[1]])
+
 
 
 class Minion(Unit):
@@ -184,10 +173,7 @@ class Minion(Unit):
         self.lifetime = 0
         self.master = Master  # Reference to the Summoner that spawned this Minion
         self.target = [0, 0]
-        self.Asset = pygame.image.load(os.path.join(
-            "Assets", "Sprites", "unit_sprites", "Minion.png"))
-        self.Asset = pygame.transform.smoothscale(
-            self.Asset, [self.Asset.get_width() * scalar[0], self.Asset.get_height() * scalar[1]])
+
 
 
 class Generator(Unit):
@@ -203,10 +189,7 @@ class Generator(Unit):
         self.y = xy[1]
         self.true_x, self.true_y = xy
         self.target = [0, 0]
-        self.Asset = pygame.image.load(os.path.join(
-            "Assets", "Sprites", "Generator.png"))
-        self.Asset = pygame.transform.smoothscale(
-            self.Asset, [self.Asset.get_width() * scalar[0], self.Asset.get_height() * scalar[1]])
+
 
 
 class Runner(Unit):
@@ -222,10 +205,7 @@ class Runner(Unit):
         self.y = xy[1]
         self.true_x, self.true_y = xy
         self.target = [0, 0]
-        self.Asset = pygame.image.load(os.path.join(
-            "Assets", "Sprites", "unit_sprites", "Runner.png"))
-        self.Asset = pygame.transform.smoothscale(
-            self.Asset, [self.Asset.get_width() * scalar[0], self.Asset.get_height() * scalar[1]])
+
 
 
 class Tank(Unit):
@@ -241,7 +221,9 @@ class Tank(Unit):
         self.y = xy[1]
         self.true_x, self.true_y = xy
         self.target = [0, 0]
-        self.Asset = pygame.image.load(os.path.join(
-            "Assets", "Sprites", "unit_sprites", "Tank.png"))
-        self.Asset = pygame.transform.smoothscale(
-            self.Asset, [self.Asset.get_width() * scalar[0], self.Asset.get_height() * scalar[1]])
+
+
+
+if __name__ == "__main__":
+    troop = Footman([100, 100])
+    print(troop.Package())
