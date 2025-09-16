@@ -433,6 +433,17 @@ if __name__ == "__main__":
                                                        scale_x, scale_y], [screen_width, screen_height], Combat.render_wrapped_text)
                     music = pygame.mixer.Sound(os.path.join(
                         "Assets", "Music", "Main_" + random.choice(["1", "2", "3"]) + ".mp3"))
+                    a = 255
+                    v = 1
+                    pygame.mixer.music.set_volume(v)
+                    title.set_alpha(a)
+                    play.set_alpha(a)
+                    _quit.set_alpha(a)
+                    menu_background.set_alpha(a)
+                    Audio.set_alpha(a)
+                    update.set_alpha(a)
+                    selector.set_alpha(a)
+
                 # QUIT button
                 elif quit_rect.collidepoint(event.pos):
                     running = False
