@@ -73,6 +73,12 @@ def encode_save_file(save_data=None):
     If no data is provided, a default state of false is used.
     """
 
+    # Auto reset Modsave if it exists
+    _path = os.path.exists("ModSave.py")
+    if _path:
+        import ModSave
+        ModSave.encode_save_file()
+
     if not save_data:
         with open("version.txt", 'r') as f:
             version = f.read().strip()

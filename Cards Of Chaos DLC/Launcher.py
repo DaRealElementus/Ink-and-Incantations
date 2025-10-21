@@ -7,9 +7,11 @@ import random
 
 
 
+import ModSave
 import Units
 import Combat
 import SaveUpdater
+import Storymanv2 as StoryManager
 
 
 # pip install/imported libs
@@ -17,7 +19,8 @@ import SaveUpdater
 try:
     import pygame
     from pygame.locals import *
-    from pypresence import Presence, exceptions
+    from pypresence import Presence
+    from pypresence.exceptions import DiscordNotFound, InvalidID, InvalidPipe, DiscordError
     import requests
 except ImportError:
     try:
@@ -76,12 +79,10 @@ def try_connect(client_id, success_flag):
         RPC = Presence(client_id)
         RPC.connect()
         success_flag.value = True
-    except exceptions as e:  # Catches Discord-related issues
-        # print(f"Failed to connect: {e}")
-        pass
+    except (DiscordNotFound, InvalidID, InvalidPipe, DiscordError) as e:  # Catches Discord-related issues
+        print(f"Failed to connect: {e}")
     except Exception as e:
-        # print(f"Failed to connect: {e}")
-        pass
+        print(f"Failed to connect: {e}")
 
 
 def connect_rpc(client_id):
@@ -122,9 +123,9 @@ def incompat_save(save_data: dict, scale_y: float = 1.0) -> tuple:
             text = font.render(
                 "Incompatible save file with this version, please delete it", True, (255, 0, 0))
             error = True
-        elif save_data['modded']:
+        elif not save_data['modded']:
             text = font.render(
-                "This save file is modded, and thus invalid", True, (255, 0, 0))
+                "This save file is unmodded, and thus invalid", True, (255, 0, 0))
             error = True
     except:
         text = font.render("Save file is corrupted", True, (255, 0, 0))
@@ -152,9 +153,14 @@ if __name__ == "__main__":
     # Get screen dimensions dynamically
     screen_width, screen_height = get_physical_screen_resolution() if os.name == 'nt' else (
         pygame.display.Info().current_w, pygame.display.Info().current_h)
-    screen_height, screen_width = 720, 1280
+    # Use a fixed window resolution for testing / fallback (width, height)
+    screen_width, screen_height = 1280, 720
     scale_x = screen_width / 1536
     scale_y = screen_height / 864
+
+    StoryManager.scale_x, StoryManager.scale_y = scale_x, scale_y
+    # StoryManager expects (screen_x, screen_y)
+    StoryManager.screen_x, StoryManager.screen_y = screen_width, screen_height
     # for all assets, use y scaling <- this is for ultrawide support
 
     # print(scale_x, scale_y)
@@ -182,6 +188,15 @@ if __name__ == "__main__":
             pygame.time.delay(1)
         pygame.quit()
         os._exit(0)  # Exit the program
+
+
+    # Mod save check
+    if ModSave.decode_save_file() is None:
+        ModSave.encode_save_file()
+
+    mod_save = ModSave.decode_save_file()
+    save = SaveUpdater.decode_save_file()
+
     title_font_size = int(scale_y * 60)
     speech_font_size = int(scale_y * 40)
     TitleFont = pygame.font.Font(os.path.join(
@@ -210,10 +225,19 @@ if __name__ == "__main__":
         topleft=(screen_width * 0, screen_height * 0))  # Update message
 
     # Load assets
+# Assets\Cards\cards\_cardBack\_cardBack_5x.png
+    menu_background = pygame.image.load(os.path.join("Assets", "Cards", "cards", "_cardBack", "_cardBack_5x.png"))
+    menu_background = pygame.transform.rotate(menu_background, 90)
+    # Increase size by 50%
+    menu_background = pygame.transform.scale2x(menu_background)
 
-    menu_background = pygame.image.load(os.path.join("Assets", "Openbook.png"))
-    selector = pygame.image.load(os.path.join(
-        "Assets", "Selector.jpg"))  # 235x119 size
+    # Darken the background
+    darken_surface = pygame.Surface(
+        (menu_background.get_width(), menu_background.get_height()))
+    darken_surface.fill((0, 0, 0))
+    darken_surface.set_alpha(200)  # Adjust alpha for darkness level
+    menu_background.blit(darken_surface, (0, 0))
+
 
     # Load music
     music = pygame.mixer.Sound(os.path.join(
@@ -229,10 +253,6 @@ if __name__ == "__main__":
         menu_background,
         (int(menu_background.get_width() * scale_y),
          int(menu_background.get_height() * scale_y))
-    )
-    selector = pygame.transform.scale(
-        selector,
-        (int(selector.get_width() * scale_y), int(selector.get_height() * scale_y))
     )
 
     update = pygame.transform.scale(
@@ -254,14 +274,13 @@ if __name__ == "__main__":
         topleft=(screen_width - AudioMute.get_width(), 0))
 
     # Render scaled text
-    title = TitleFont.render('Ink & Incantations', True, (255, 0, 255))
-    play = SpeechFont.render('PLAY', True, (255, 255, 255))
+    title = TitleFont.render('Ink & Incantations', True, (255, 208, 128))
+    subtitle = SpeechFont.render('Cards of Chaos', True, (255, 255, 255))
+    play = SpeechFont.render('New Game', True, (255, 255, 255))
+    Continue = SpeechFont.render('Continue', True, (255, 255, 255))
+    Collection = SpeechFont.render('Collection', True, (255, 255, 255))
     warning = "Warning: This game is work in progress, some features are incomplete"
-    _quit = SpeechFont.render('QUIT', True, (255, 255, 255))
-
-    selector_enchanter = SpeechFont.render('Mage', True, (255, 255, 255))
-    selector_monarch = SpeechFont.render('Monarch', True, (255, 255, 255))
-    selector_madman = SpeechFont.render('Madman', True, (255, 255, 255))
+    _quit = SpeechFont.render('Quit', True, (255, 255, 255))
 
     AudioHoverUn = SpeechFont.render('Audio: Unmuted', False, (255, 255, 255))
     AudioHoverUnRect = AudioHoverUn.get_rect(
@@ -273,13 +292,38 @@ if __name__ == "__main__":
     # Center elements dynamically
     title_rect = title.get_rect(
         center=(screen_width // 2, screen_height * 0.3))
-    play_rect = play.get_rect(center=(screen_width // 2, screen_height * 0.5))
-    quit_rect = _quit.get_rect(
-        center=(screen_width // 2, screen_height * 0.55))
+    
+    subtitle_rect = subtitle.get_rect(
+        center=(screen_width // 2, screen_height * 0.34))
+    
+    # Drop shadow for title and subtitle
+    shadow_offset = int(5* scale_y)  # Offset for the shadow
+    title_shadow = TitleFont.render('Ink & Incantations', True, (0, 0, 0))
+    subtitle_shadow = SpeechFont.render('Cards of Chaos', True, (0, 0, 0))
+    title_shadow.set_alpha(150)  # Make shadow semi-transparent
+    subtitle_shadow.set_alpha(150)  # Make shadow semi-transparent
+    title_shadow_rect = title_shadow.get_rect(
+        center=(screen_width // 2 + shadow_offset, screen_height * 0.3 + shadow_offset))
+    subtitle_shadow_rect = subtitle_shadow.get_rect(
+        center=(screen_width // 2 + shadow_offset, screen_height * 0.34 + shadow_offset))
+    
+
+
+    # Some nerdy stuff going on here, we dont show continue if no mod save exists
+    # but if it does, we show continue and move the other buttons down
+    if mod_save['World'] != 1 or mod_save['Level'] != 1:
+        play_rect = play.get_rect(center=(screen_width // 2, screen_height * 0.55))
+        continue_rect = Continue.get_rect(center=(screen_width // 2, screen_height * 0.5))
+        collection_rect = Collection.get_rect(center=(screen_width // 2, screen_height * 0.6))
+        quit_rect = _quit.get_rect(center=(screen_width // 2, screen_height * 0.65))
+    else:
+        play_rect = play.get_rect(center=(screen_width // 2, screen_height * 0.5))
+        collection_rect = Collection.get_rect(center=(screen_width // 2, screen_height * 0.55))
+        quit_rect = _quit.get_rect(center=(screen_width // 2, screen_height * 0.60))
+    
+
     menu_background_rect = menu_background.get_rect(
         center=(screen_width // 2, screen_height // 2))
-    selector_rect = selector.get_rect(center=(
-        selector.get_width() // 2, (screen_height - (selector.get_height() // 2))))
 
     Audio = AudioUnmute if SaveUpdater.decode_save_file()[
         'music'] else AudioMute
@@ -334,44 +378,67 @@ if __name__ == "__main__":
         v += 0.004
         pygame.mixer.music.set_volume(v)
         title.set_alpha(a)
+        subtitle.set_alpha(a)
         play.set_alpha(a)
         _quit.set_alpha(a)
+
+        if mod_save['World'] != 1 or mod_save['Level'] != 1:
+            Continue.set_alpha(a)
+        Collection.set_alpha(a)
         menu_background.set_alpha(a)
+        title_shadow.set_alpha(a)
+        subtitle_shadow.set_alpha(a)
         Audio.set_alpha(a)
         update.set_alpha(a)
-        selector.set_alpha(a)
-        gameDisplay.blit(selector, selector_rect.topleft)
         gameDisplay.blit(menu_background, menu_background_rect.topleft)
         gameDisplay.blit(Audio, AudioMuteRect.topleft)
         gameDisplay.blit(update, update_rect.topleft)
+        gameDisplay.blit(title_shadow, title_shadow_rect.topleft)
+        gameDisplay.blit(subtitle_shadow, subtitle_shadow_rect.topleft)
         gameDisplay.blit(title, title_rect.topleft)
+        gameDisplay.blit(subtitle, subtitle_rect.topleft)
+        
+        if mod_save['World'] != 1 or mod_save['Level'] != 1:
+            gameDisplay.blit(Continue, continue_rect.topleft)
+            gameDisplay.blit(Collection, collection_rect.topleft)
+        else:
+            gameDisplay.blit(Collection, collection_rect.topleft)
         gameDisplay.blit(play, play_rect.topleft)
         gameDisplay.blit(_quit, quit_rect.topleft)
         pygame.display.update()
 
-    hover_enchanter = False
-    hover_monarch = False
-    hover_madman = False
     ai = 'enchanter'
     pygame.event.clear()
+    if ModSave.decode_save_file()['World'] == 1 and ModSave.decode_save_file()['Level'] == 1:
+        saveBool = True
+    else:
+        saveBool = False
 
     while running:
         if Connect:
             RPC.update(
                 pid=pid,
                 state="Preparing for battle",
-                details=f"Current opponent: {ai.capitalize()}",
+                details=f"In the main menu",
                 start=epoch,
                 large_image="icon",
-                large_text="The Enchanters Book awaits....")
-        gameDisplay.blit(selector, selector_rect.topleft)
+                large_text="A Glimpse into the mirror...")
         gameDisplay.blit(menu_background, menu_background_rect.topleft)
         gameDisplay.blit(Audio, AudioMuteRect.topleft)
         gameDisplay.blit(update, update_rect.topleft)  # Update message
+        gameDisplay.blit(title_shadow, title_shadow_rect.topleft)
         gameDisplay.blit(title, title_rect.topleft)
+        
+        gameDisplay.blit(subtitle_shadow, subtitle_shadow_rect.topleft)
+        gameDisplay.blit(subtitle, subtitle_rect.topleft)
         gameDisplay.blit(play, play_rect.topleft)
+       
+        if mod_save['World'] != 1 or mod_save['Level'] != 1:
+            gameDisplay.blit(Continue, continue_rect.topleft)
+            gameDisplay.blit(Collection, collection_rect.topleft)
+        else:
+            gameDisplay.blit(Collection, collection_rect.topleft)
         gameDisplay.blit(_quit, quit_rect.topleft)
-        # Update message
         gameDisplay.blit(update, (screen_width * 0, screen_height * 0))
         gameDisplay.blit(Audio, AudioMuteRect.topleft)
         music.set_volume(1) if SaveUpdater.decode_save_file()[
@@ -387,19 +454,9 @@ if __name__ == "__main__":
 
             if event.type == MOUSEBUTTONDOWN and event.button == 1:
                 # Select opponent
-                if selector_rect.collidepoint(event.pos):
-                    # Determine which villain is selected
-                    third_width = selector_rect.width / 3
-                    # Calculate relative X position within the selector
-                    relative_x = event.pos[0] - selector_rect.left
-                    if relative_x < third_width:
-                        ai = 'enchanter'
-                    elif relative_x < third_width * 2:
-                        ai = 'monarch'
-                    else:
-                        ai = 'madman'
                 # PLAY button
                 if play_rect.collidepoint(event.pos):
+                    ModSave.resetRun()
                     a = 255
                     v = 1
                     for i in range(255):
@@ -408,35 +465,95 @@ if __name__ == "__main__":
                         v -= 0.004
                         pygame.mixer.music.set_volume(v)
                         title.set_alpha(a)
+                        subtitle.set_alpha(a)
                         play.set_alpha(a)
                         _quit.set_alpha(a)
                         menu_background.set_alpha(a)
+
+                        Continue.set_alpha(a)
+                        Collection.set_alpha(a)
+                        title_shadow.set_alpha(a)
+                        subtitle_shadow.set_alpha(a)
                         Audio.set_alpha(a)
                         update.set_alpha(a)
-                        selector.set_alpha(a)
                         gameDisplay.blit(
                             menu_background, menu_background_rect.topleft)
-                        gameDisplay.blit(selector, selector_rect.topleft)
                         gameDisplay.blit(title, title_rect.topleft)
+
+                        gameDisplay.blit(title_shadow, title_shadow_rect.topleft)
+                        gameDisplay.blit(subtitle_shadow, subtitle_shadow_rect.topleft)
                         gameDisplay.blit(play, play_rect.topleft)
+                        gameDisplay.blit(subtitle, subtitle_rect.topleft)
+                        
+                        if mod_save['World'] != 1 or mod_save['Level'] != 1:
+                            gameDisplay.blit(Continue, continue_rect.topleft)
+                            gameDisplay.blit(Collection, collection_rect.topleft)
+                        else:
+                            gameDisplay.blit(Collection, collection_rect.topleft)
                         gameDisplay.blit(Audio, AudioMuteRect.topleft)
                         gameDisplay.blit(update, update_rect.topleft)
                         gameDisplay.blit(_quit, quit_rect.topleft)
                         pygame.time.delay(1)
                         pygame.display.update()
-                    pygame.time.delay(1000)
-                    Again = True
-                    while Again:
-                        music.stop()
-                        gameDisplay.fill((0, 0, 0))
-                        Again = Combat_loader.BatStart(ai, gameDisplay, Connect, RPC, pid, Unit_loader, SaveUpdater, [
-                                                       scale_x, scale_y], [screen_width, screen_height], Combat.render_wrapped_text)
+
+                        # Call the story manager for new game here
+                        StoryManager.begin_story_mode(gameDisplay)
+
                     music = pygame.mixer.Sound(os.path.join(
                         "Assets", "Music", "Main_" + random.choice(["1", "2", "3"]) + ".mp3"))
                 # QUIT button
                 elif quit_rect.collidepoint(event.pos):
                     running = False
+                # CONTINUE button
+                elif mod_save['World'] != 1 and mod_save['Level'] != 1 and continue_rect.collidepoint(event.pos):
+                    a = 255
+                    v = 1
+                    for i in range(255):
+                        gameDisplay.fill((0, 0, 0))
+                        a -= 1
+                        v -= 0.004
+                        pygame.mixer.music.set_volume(v)
+                        title.set_alpha(a)
+                        subtitle.set_alpha(a)
+                        play.set_alpha(a)
+                        _quit.set_alpha(a)
 
+                        Continue.set_alpha(a)
+                        Collection.set_alpha(a)
+                        menu_background.set_alpha(a)
+                        title_shadow.set_alpha(a)
+                        subtitle_shadow.set_alpha(a)
+                        Audio.set_alpha(a)
+                        update.set_alpha(a)
+                        gameDisplay.blit(
+                            menu_background, menu_background_rect.topleft)
+                        gameDisplay.blit(title, title_rect.topleft)
+
+                        gameDisplay.blit(title_shadow, title_shadow_rect.topleft)
+                        gameDisplay.blit(subtitle_shadow, subtitle_shadow_rect.topleft)
+                        gameDisplay.blit(play, play_rect.topleft)
+                        gameDisplay.blit(subtitle, subtitle_rect.topleft)
+                        
+                        if mod_save['World'] != 1 or mod_save['Level'] != 1:
+                            gameDisplay.blit(Continue, continue_rect.topleft)
+                            gameDisplay.blit(Collection, collection_rect.topleft)
+                        else:
+                            gameDisplay.blit(Collection, collection_rect.topleft)
+                        gameDisplay.blit(Audio, AudioMuteRect.topleft)
+                        gameDisplay.blit(update, update_rect.topleft)
+                        gameDisplay.blit(_quit, quit_rect.topleft)
+                        pygame.time.delay(1)
+                        pygame.display.update()
+                    
+                    StoryManager.resume_from_save(gameDisplay)
+
+                    music = pygame.mixer.Sound(os.path.join(
+                        "Assets", "Music", "Main_" + random.choice(["1", "2", "3"]) + ".mp3"))
+                    # Call the story manager for continue here
+                # COLLECTION button
+                elif collection_rect.collidepoint(event.pos):
+                    # Calls the card collection manager here, this should show guiled cards
+                    StoryManager.SeeCollection(gameDisplay)
                 elif AudioMuteRect.collidepoint(event.pos):
                     save = SaveUpdater.decode_save_file()
                     save['music'] = False if save['music'] else True
@@ -444,20 +561,6 @@ if __name__ == "__main__":
                     Audio = AudioUnmute if save['music'] else AudioMute
         if event.type == MOUSEMOTION:
             # Selector: Show names of villains on hover, each villain occupies 1/3 of the selector's width
-            if selector_rect.collidepoint(event.pos):
-                # Determine which villain is being hovered over
-                third_width = selector_rect.width / 3
-                # Calculate relative X position within the selector
-                relative_x = event.pos[0] - selector_rect.left
-                if relative_x < third_width:
-                    hover_enchanter, hover_monarch, hover_madman = True, False, False
-                elif relative_x < third_width * 2:
-                    hover_enchanter, hover_monarch, hover_madman = False, True, False
-                else:
-                    hover_enchanter, hover_monarch, hover_madman = False, False, True
-            else:
-                # Reset hover states if the mouse is outside the selector bounds
-                hover_enchanter, hover_monarch, hover_madman = False, False, False
             if AudioMuteRect.collidepoint(event.pos):
                 pygame.draw.rect(gameDisplay, (0, 0, 0), AudioHoverUn.get_rect(topright=event.pos)) if SaveUpdater.decode_save_file()[
                     'music'] else pygame.draw.rect(gameDisplay, (0, 0, 0), AudioHoverMu.get_rect(topright=event.pos))
@@ -470,23 +573,13 @@ if __name__ == "__main__":
                 gameDisplay.blit(
                     updateHover, updateHover.get_rect(topleft=event.pos))
 
-        mouseloc = pygame.mouse.get_pos()
-        if hover_enchanter:
-            text_rect = selector_enchanter.get_rect(bottomleft=mouseloc)
-            pygame.draw.rect(gameDisplay, (0, 0, 0), text_rect)
-            gameDisplay.blit(selector_enchanter, text_rect.topleft)
-        elif hover_monarch:
-            text_rect = selector_monarch.get_rect(bottomleft=mouseloc)
-            pygame.draw.rect(gameDisplay, (0, 0, 0), text_rect)
-            gameDisplay.blit(selector_monarch, text_rect.topleft)
-        elif hover_madman:
-            text_rect = selector_madman.get_rect(bottomleft=mouseloc)
-            pygame.draw.rect(gameDisplay, (0, 0, 0), text_rect)
-            gameDisplay.blit(selector_madman, text_rect.topleft)
 
         # Debug rect!!!
         # Drect = pygame.Rect(0, 0, screen_width, screen_height)
         # pygame.draw.rect(gameDisplay, (255, 0, 0), Drect, 1)
-
+        
         pygame.display.flip()
         gameDisplay.fill((0, 0, 0))
+    os._exit(0)
+    RPC.close() if not Connect else None
+    pygame.quit() # Exit the program

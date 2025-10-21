@@ -1,13 +1,11 @@
 # Ink and Incantation: Cards Of Chaos DLC
+
 ## Table of Contents
+
 - [Introduction](#introduction)
-- [Opponents](#opponents)
-  - [Enchanter](#enchanter)
-  - [Monarch](#monarch)
-  - [Madman](#madman)
 - [Setup](#setup)
   - [Prerequisites](#prerequisites)
-  - [Mods](#modding)
+  - [Installation](#installing)
 - [Resetting Your Save](#resetting-your-save)
 - [Credits](#credits)
 
@@ -20,26 +18,34 @@ A deck of cards and an everchanging mirror, face the old foes, with stronger mag
 ## Setup
 
 ### Prerequisites
+
 - Ensure you have Python installed (originally built with Python 3.11.9).
 - Ink and Incantations Base game.
 - Add Python to your system's PATH during installation.
 
 ### Installing
+
 - Drag and Drop the mod into the mods folder
 - you will be prompted what version of I&I you wish to play when you run the game, Select Cards Of Chaos.
 - Mods can be found [here](https://xliam.space/iaimods.html), Thanks Liam!
 
 on your first time running, I reccomend running SaveUpdater.py to ensure your save file is fresh
+
 ## Resetting Your Save
+
 THIS WILL RESET ALL YOUR PROGRESS, THIS ACTION IS NOT REVERSEABLE <br>
 Run SaveUpdater.py to reset your save file
 
 ## Credits
+
 - **Director, Developer, and Artist**: Elementus
 - **ModLoader Developer and Mod Spearhead**: Liam (Typhoonz0)
+- **Tarot Cards**
+  - [❀ ZUNE ❀](https://linktr.ee/starsinabox)
+    - *Check out thier amazing work!*
+    - *Message me if you have any issues with your art*
 - **Music**:
   - [DeusLower](https://www.youtube.com/@DeusLower)
-  - [Erang](https://www.youtube.com/channel/UC0xBatTv8HbChLQukeerUCg)
     - *Check out their amazing work!*
     - *message me if you have any issues with your music.*
 - **Status**: This game is a work in progress and is part of an assessment item.

@@ -1,3 +1,4 @@
+```mermaid
 ---
 config:
   layout: fixed
@@ -49,3 +50,4 @@ flowchart TD
     TBA --> TC{"Play Again?"}
     TC -- Yes --> D
     TC -- No --> E
+```

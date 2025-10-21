@@ -66,12 +66,14 @@ def render_wrapped_text(surface, text, font, color, alpha, rect, line_spacing=5)
         y_offset += font.size(line)[1] + line_spacing
 
 
-def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, Units: object, SaveUpdater: object, Scalars: list, Screensize: list, wrap_func: callable) -> bool:
+def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid:int, Units: object, SaveUpdater: object, Scalars: list, Screensize: list, opponentHand:list,) -> tuple[bool, int]:
 
     if len(Scalars) != 2:
         raise ValueError("Scalars Argument must contain two elements.")
     if len(Screensize) != 2:
         raise ValueError("Screensize Argument must contain two elements.")
+    if Ai == "clockwork":
+        Ai = 'enchanter'  # no explicit clockwork AI; reuse enchanter behaviour, but faster.
 
     # Get screen dimensions dynamically
     screen_width, screen_height = Screensize[0], Screensize[1]
@@ -103,7 +105,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
     start_time = time.time()
     gameDisplay = display
     BattleGround = pygame.image.load(os.path.join(
-        "Assets", "Sprites", "pixil-frame-0.png"))
+        "Assets", "Sprites", "Mirror.png"))
     inkblot = pygame.image.load(os.path.join(
         "Assets", "Sprites", "InkBlot.png")).convert_alpha()
     clock = pygame.time.Clock()
@@ -119,8 +121,8 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
     BattleGround = pygame.transform.smoothscale(
         BattleGround,  # 1000x1000 Asset
         # Height should be scaled to max y of screen, which is the same scalar as width
-        (int(BattleGround.get_width() * (screen_height / 1000)),
-         int(BattleGround.get_height() * (screen_height / 1000)))
+        (int(BattleGround.get_width() * (screen_height / 1000) * 1.25),
+         int(BattleGround.get_height() * (screen_height / 1000) * 1.25))
     )
     inkblot = pygame.transform.scale(
         inkblot,
@@ -162,7 +164,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
 
     # Dynamic positioning
     BattleGround_pos_rect = BattleGround.get_rect(
-        center=(screen_width // 2, screen_height // 2))
+        center=(screen_width // 2, screen_height // 2 - (BattleGround.get_height() * 0.05)))
     BattleGround_pos = BattleGround_pos_rect.topleft
     summon_UI_pos_rect = summon_UI.get_rect(
         center=(screen_width - (summon_UI.get_width() // 2), screen_height // 2))
@@ -172,57 +174,6 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
     manaCounter_pos = manaCounter_pos_rect.topleft
     HP_pos = (screen_width * 0, screen_height * 0)
 
-    # Adjust tutorial text positions dynamically
-    tutorial_positions = [
-        pygame.Rect(  # Welcome to the battlefield, Mage.
-            screen_width // 2 - 200,  # Centered horizontally
-            (screen_height * 0.8) - 50,  # Centered vertically
-            400,  # Width of the text box
-            100    # Height of the text box
-        ),
-        pygame.Rect(  # This is your mana counter. You need mana to summon units.
-            (screen_width * 0.2) - 200,  # Centered horizontally
-            (screen_height * 0.8) - 50,  # Centered vertically
-            400,  # Width of the text box
-            100    # Height of the text box
-        ),
-        pygame.Rect(  # These are your summoning options. Each unit costs a different amount of mana. --->
-            (screen_width * 0.75) - 200,  # Centered horizontally
-            (screen_height * 0.2) - 50,  # Centered vertically
-            400,  # Width of the text box
-            100    # Height of the text box
-        ),
-        pygame.Rect(  # This is your health. If it reaches zero, you lose.
-            min(max(int(screen_width * 0.1), 0), screen_width - 400),
-            min(max(int(screen_height * 0), 0), screen_height - 100),
-            400,
-            100
-        ),
-        pygame.Rect(  # These are pumps. Control them to increase mana rate.
-            min(max(int(screen_width * 0.5), 0), screen_width - 400),
-            min(max(int(screen_height * 0.5), 0), screen_height - 100),
-            400,
-            100
-        ),
-        pygame.Rect(  # Click and drag to select your units.
-            min(max(int(screen_width * 0.5), 0), screen_width - 400),
-            min(max(int(screen_height * 0.4), 0), screen_height - 100),
-            400,
-            100
-        ),
-        pygame.Rect(  # Right-click to move your selected units.
-            min(max(int(screen_width * 0.5), 0), screen_width - 400),
-            min(max(int(screen_height * 0.4), 0), screen_height - 100),
-            400,
-            100
-        ),
-        pygame.Rect(  # Defeat the enemy by reducing their health to zero.
-            screen_width // 2 - 200,  # Centered horizontally
-            (screen_height * 0.8) - 50,  # Centered vertically
-            400,  # Width of the text box
-            100    # Height of the text box
-        )
-    ]
 
     # Adjust other hardcoded positions dynamically
     Rloc = (screen_width * 0.4, screen_height * 0.9)
@@ -269,10 +220,10 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
     # Adjust endgame message positions dynamically
     endgame_message_pos = (screen_width * 0.4, screen_height * 0.9)
 
-    X_MIN = int(BattleGround_pos[0] + (BattleGround.get_width() * 0.124))
-    X_MAX = int(BattleGround_pos[0] + (BattleGround.get_width() * 0.865))
-    Y_MIN = int(BattleGround_pos[1] + (BattleGround.get_height() * 0.19))
-    Y_MAX = int(BattleGround_pos[1] + (BattleGround.get_height() * 0.89))
+    X_MIN = int(BattleGround_pos[0] + (BattleGround.get_width() * 0.24))
+    X_MAX = int(BattleGround_pos[0] + (BattleGround.get_width() * 0.76))
+    Y_MIN = int(BattleGround_pos[1] + (BattleGround.get_height() * 0.23))
+    Y_MAX = int(BattleGround_pos[1] + (BattleGround.get_height() * 0.77))
 
     identifyer = pygame.image.load(os.path.join(
         "Assets", "Sprites", "Identifier.png"))
@@ -390,76 +341,9 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                               special_flags=BLEND_RGBA_MIN)
         Enemy_ai = Enchanter
 
-    # Enchanters speech
-    for i in range(5):
-        gameDisplay.fill((0, 0, 0))
-        if i == 1:
-            gameDisplay.blit(Ready, Rloc)
-        if i == 3:
-            gameDisplay.blit(Begin, Bloc)
-        pygame.display.flip()
-
-        clock.tick()
-        skip = False
-        if i != 2 or i != 0:
-            for i in range(4000):
-                if skip:
-                    break
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                        print("Game exiting")
-                        quit()
-                    if event.type == MOUSEBUTTONDOWN and event.button == 1:
-                        skip = True
-                    if event.type == KEYDOWN and event.key == K_F12:
-                        screenshot(gameDisplay)
-                pygame.time.delay(1)
-
-        else:
-            for i in range(2000):
-                if skip:
-                    break
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                        print("Game exiting")
-                        quit()
-                    if event.type == MOUSEBUTTONDOWN and event.button == 1:
-                        skip = True
-                    if event.type == KEYDOWN and event.key == K_F12:
-                        screenshot(gameDisplay)
-                pygame.time.delay(1)
-
-    # Fade in the background
-    a = 0
-    for i in range(255):
-        gameDisplay.fill((0, 0, 0))
-        a += 1
-        BattleGround.set_alpha(a)
-        gameDisplay.blit(BattleGround, BattleGround_pos)
-        pygame.display.flip()
-
-    # Fade in the UI + pumps
     pygame.time.delay(1)
     running = True
-    Hp = HPFont.render(str(player_HP) + ":" +
-                       str(Enchanter_HP), False, (255, 150, 255))
     
-    a = 0
-    for i in range(255):
-        gameDisplay.fill((0, 0, 0))
-        gameDisplay.blit(BattleGround, BattleGround_pos)
-        a += 1
-        for p in Pumps:
-            p.Asset.set_alpha(a)
-            gameDisplay.blit(p.Asset, (p.x, p.y))
-        manaCounter.set_alpha(a)
-        summon_UI.set_alpha(a)
-        gameDisplay.blit(summon_UI, summon_UI_pos)
-        gameDisplay.blit(manaCounter, manaCounter_pos)
-        Footman_cost.set_alpha(a)
-        Hp.set_alpha(a)
-        gameDisplay.blit(Hp, HP_pos)
-        pygame.display.flip()
 
     # Loading Vars
     selection_icon = pygame.image.load(os.path.join(
@@ -481,166 +365,6 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
         f"{player_HP}:{Enchanter_HP}", True, (255, 150, 255))
     mouseinkblots = []
 
-    t_x = player_base[0]
-    t_y = player_base[1] - (BattleGround_height * 0.2)
-
-    pygame.event.clear()
-
-    if not SaveUpdater.decode_save_file()['tutorial']:
-        tutorial_steps = [
-            ("Welcome to the battlefield, Mage.", tutorial_positions[0]),
-            ("This is your mana counter. You need mana to summon units.",
-             tutorial_positions[1]),
-            ("These are your summoning options. Each unit costs a different amount of mana. --->",
-             tutorial_positions[2]),
-            ("This is your health. If it reaches zero, you lose.",
-             tutorial_positions[3]),
-            ("These are pumps. Control them to increase mana rate.",
-             tutorial_positions[4]),
-            ("Click and drag to select your units.", tutorial_positions[5]),
-            ("Right-click to move your selected units.",
-             tutorial_positions[6]),
-            ("Defeat the enemy by reducing their health to zero.",
-             tutorial_positions[7])
-        ]
-        i = 0
-        for step, turect in tutorial_steps:
-            i += 1
-            frame = 0
-            gameDisplay.fill((0, 0, 0))
-            gameDisplay.blit(BattleGround, BattleGround_pos)
-            for p in Pumps:
-                gameDisplay.blit(p.Asset, (p.x, p.y))
-            gameDisplay.blit(manaCounter, manaCounter_pos)
-            gameDisplay.blit(summon_UI, summon_UI_pos)
-            gameDisplay.blit(Hp, HP_pos)
-            # surface, text, font, color, alpha, rect, line_spacing=5
-            render_wrapped_text(gameDisplay, step, SpeechFont,
-                                (255, 150, 255), 255, turect)
-            pygame.display.flip()
-            pygame.time.delay(500)
-            skip = False
-            if i == 6 or i == 7:
-                friendly.append(Units.Footman(
-                    (player_base[0], player_base[1]), Scalars))
-                friendly[-1].target = (player_base[0], player_base[1])
-
-            while not skip:
-                frame += 1
-                clock.tick()  # Limit the frame rate to 60 FPS
-                gameDisplay.fill((0, 0, 0))  # Clear the screen
-                # Redraw the background
-                gameDisplay.blit(BattleGround, BattleGround_pos)
-
-                # Redraw all static elements
-                for p in Pumps:
-                    gameDisplay.blit(p.Asset, (p.x, p.y))
-                gameDisplay.blit(manaCounter, manaCounter_pos)
-                gameDisplay.blit(summon_UI, summon_UI_pos)
-                gameDisplay.blit(Hp, HP_pos)
-
-                # Handle animations for step 6
-                if i == 6:
-                    if frame < 360:
-                        gameDisplay.blit(
-                            friendly[-1].Asset, (friendly[-1].x, friendly[-1].y))
-                        # Center on unit's x
-                        x = friendly[-1].x + \
-                            (friendly[-1].Asset.get_width() // 2)
-                        # Center on unit's y
-                        y = friendly[-1].y + \
-                            (friendly[-1].Asset.get_height() // 2)
-                        # Convert frame to angle in radians
-                        angle = frame * (2 * math.pi / 360)
-                        # Offset by half inkblot width
-                        inkblot_x = x + (math.cos(angle) * 50) - \
-                            (inkblot.get_width() // 2)
-                        # Offset by half inkblot height
-                        inkblot_y = y + (math.sin(angle) * 50) - \
-                            (inkblot.get_height() // 2)
-                        inkblot_pos = (inkblot_x, inkblot_y)
-                        inkblots.append(inkblot_pos)
-
-                    # Draw inkblots
-                    for ink in inkblots:
-                        gameDisplay.blit(inkblot, ink)
-
-                    if frame == 361:
-                        inkblots.clear()
-                        gameDisplay.blit(
-                            friendly[-1].Asset, (friendly[-1].x, friendly[-1].y))
-                        gameDisplay.blit(
-                            selection_icon, (friendly[-1].x, friendly[-1].y))
-
-                    if 361 < frame < 461:
-                        gameDisplay.blit(
-                            friendly[-1].Asset, (friendly[-1].x, friendly[-1].y))
-                        gameDisplay.blit(
-                            selection_icon, (friendly[-1].x, friendly[-1].y))
-
-                    if frame == 461:
-                        inkblots.clear()
-                        frame = 0  # Reset frame counter
-
-                    gameDisplay.blit(cursor_img, inkblot_pos)
-
-                # Handle animations for step 7
-                if i == 7:
-                    if frame < 100:
-                        gameDisplay.blit(
-                            friendly[-1].Asset, (friendly[-1].x, friendly[-1].y))
-                        gameDisplay.blit(
-                            selection_icon, (friendly[-1].x, friendly[-1].y))
-                    elif 100 <= frame < 500:
-                        cursor_pos = (
-                            (friendly[-1].x + ((t_x - friendly[-1].x) *
-                             (frame - 100) / 400)+(cursor_img.get_width() // 2)),
-                            (friendly[-1].y + ((t_y - friendly[-1].y) *
-                             (frame - 100) / 400)+(cursor_img.get_height() // 2))
-                        )
-                        gameDisplay.blit(cursor_img, cursor_pos)
-
-                        gameDisplay.blit(
-                            friendly[-1].Asset, (friendly[-1].x, friendly[-1].y))
-                        gameDisplay.blit(
-                            selection_icon, (friendly[-1].x, friendly[-1].y))
-                    elif frame == 500:
-                        friendly[-1].target = (t_x, t_y)
-                    elif 500 < frame < 1000:
-                        friendly[-1].move(0.1, [], boundaries, Scalars)
-                        gameDisplay.blit(
-                            friendly[-1].Asset, (friendly[-1].x, friendly[-1].y))
-                        gameDisplay.blit(
-                            selection_icon, (friendly[-1].x, friendly[-1].y))
-                        gameDisplay.blit(cursor_img, cursor_pos)
-                    elif frame == 1000:
-                        friendly[-1].target = (player_base)
-                        friendly[-1].x, friendly[-1].y = player_base[0], player_base[1]
-                        frame = 0
-                # Update the display
-                render_wrapped_text(gameDisplay, step,
-                                    SpeechFont, (255, 150, 255), 255, turect)
-                # draw the mouse cursor
-                pygame.mouse.set_visible(False)
-                gameDisplay.blit(cursor_img, pygame.mouse.get_pos())
-                pygame.display.flip()
-
-                # Event handling
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                        print("Game exiting")
-                        pygame.quit()
-                        return False
-                    if event.type == MOUSEBUTTONDOWN or event.type == KEYDOWN:
-                        skip = True
-                    if event.type == KEYDOWN and event.key == K_F12:
-                        screenshot(gameDisplay)
-
-        friendly.clear()
-        inkblots.clear()
-        save = SaveUpdater.decode_save_file()
-        save['tutorial'] = True
-        SaveUpdater.encode_save_file(save)
 
     pygame.event.clear()
 
@@ -688,6 +412,11 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                 else:
                     show_fps_debug = False
                     show_mana_debug = False
+
+            if event.type == KEYDOWN and event.key == K_EQUALS:
+                #little dev tool to insta win for testing
+                Won = True
+                Enchanter_HP = 0
             if event.type == KEYDOWN and event.key == K_F2:
                 if show_mana_debug:
                     show_mana_debug = False
@@ -848,6 +577,12 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
         # putting the pumps on the field
         for p in Pumps:
             gameDisplay.blit(p.Asset, (p.x, p.y))
+            flipped_asset = pygame.transform.flip(p.Asset, False, True)
+            flipped_y = (p.y + p.Asset.get_height())
+            flipped_asset.set_alpha(100)  # Make the reflection fainter
+            gameDisplay.blit(flipped_asset, (p.x, flipped_y))
+
+
             if p.hp <= 0:
                 for f in friendly:
                     if p.x - 10 <= f.x <= p.x + p.Asset.get_width() + 10 and p.y - 10 <= f.y <= p.y + p.Asset.get_height() + 10:
@@ -907,6 +642,14 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
             else:
                 f.move(dt, friendly, boundaries, Scalars)
                 gameDisplay.blit(f.Asset, (f.x, f.y))
+
+
+                flipped_asset = pygame.transform.flip(f.Asset, False, True)
+                flipped_y = (f.y + f.Asset.get_height())
+                flipped_asset.set_alpha(100)  # Make the reflection fainter
+                gameDisplay.blit(flipped_asset, (f.x, flipped_y))
+
+
                 gameDisplay.blit(Friendly_identifyer, (f.x + f.Asset.get_width() // 2 - Friendly_identifyer.get_width(
                 ) // 2, f.y - f.Asset.get_height() // 2 - Friendly_identifyer.get_height() // 2))
             # counting the number of controlled pumps
@@ -959,6 +702,13 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
             else:
                 e.move(dt, enemy, boundaries, Scalars)
                 gameDisplay.blit(e.Asset, (e.x, e.y))
+
+                flipped_asset = pygame.transform.flip(e.Asset, False, True)
+                flipped_y = (e.y + e.Asset.get_height())
+                flipped_asset.set_alpha(100)  # Make the reflection fainter
+                gameDisplay.blit(flipped_asset, (e.x, flipped_y))
+
+
                 gameDisplay.blit(Enemy_identifyer, (e.x + e.Asset.get_width() // 2 - Enemy_identifyer.get_width(
                 ) // 2, e.y - e.Asset.get_height() // 2 - Enemy_identifyer.get_height() // 2))
             if e.__class__.__name__ == "Generator":
@@ -1083,6 +833,13 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                 base_img = 0
         gameDisplay.blit(base_images[base_img], base_images[base_img].get_rect(
             center=(enemy_base[0], enemy_base[1])))
+        
+        #  mirror the base
+        flipped_base = pygame.transform.flip(base_images[base_img], False, True)
+        flipped_base.set_alpha(100)  # Make the reflection fainter
+        flipped_pos = (enemy_base[0] - (base_images[base_img].get_width() // 2),
+                       enemy_base[1] + (base_images[base_img].get_height() // 2))
+        gameDisplay.blit(flipped_base, flipped_pos)
 
         # Hp display
         if hp_cache != (player_HP, Enchanter_HP):
@@ -1118,7 +875,17 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
                 gameDisplay.blit(Tank_cost, Tank_cost_pos)
 
         # cursor display
-        gameDisplay.blit(cursor_img, pygame.mouse.get_pos())
+        cursor_pos = pygame.mouse.get_pos()
+
+        gameDisplay.blit(cursor_img, cursor_pos)
+
+        if X_MIN < cursor_pos[0] < X_MAX and Y_MIN < cursor_pos[1] < Y_MAX:
+            flipped_cursor = pygame.transform.flip(
+                cursor_img, False, False)
+            flipped_cursor.set_alpha(100)  # Make it fainter
+            flipped_pos = (
+                cursor_pos[0], cursor_pos[1] + cursor_img.get_height())
+            gameDisplay.blit(flipped_cursor, flipped_pos)
 
         # Display FPS counter
         fps = int(clock.get_fps())
@@ -1178,6 +945,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
         pygame.display.flip()
         clock.tick()
 
+
     end_time = time.time()
     total_time = end_time - start_time
     time_score = max_time - total_time
@@ -1185,304 +953,6 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid, U
         time_score = 0
     score += time_score
 
-    if Won:
-        if Ai == 'enchanter':
-            # Check if this is the first win
-            if not SaveUpdater.decode_save_file()["beat_enchanter_first_time"]:
-                First_Win = SpeechFont.render(
-                    'You never learn', True, (255, 150, 255))
-                FirstWLoc = First_Win.get_rect(
-                    center=(screen_width // 2, screen_height * 0.4))
-                messages = [(First_Win, FirstWLoc)]
-                # Update the save file to record first win
-                save = SaveUpdater.decode_save_file()
-                save["beat_enchanter_first_time"] = True
-                SaveUpdater.encode_save_file(save)
-                # Set up for second phase
-                Enchanter_HP = 100
-                player_HP = 1
-                running = True
-            else:
-                # Regular win after first time
-                Second_1 = SpeechFont.render(
-                    'The game is the same', True, (255, 150, 255))
-                Second_2 = SpeechFont.render(
-                    'So you have learnt', True, (255, 150, 255))
-                Second1Loc = Second_1.get_rect(
-                    center=(screen_width // 2, screen_height * 0.5))
-                Second2Loc = Second_2.get_rect(
-                    center=(screen_width // 2, screen_height * 0.6))
-                save = SaveUpdater.decode_save_file()
-                save['enchanter'] = True
-                SaveUpdater.encode_save_file(save)
-                messages = [(Second_1, Second1Loc), (Second_2, Second2Loc)]
-        elif Ai == 'monarch':
-            M_win = SpeechFont.render(
-                'Oh quite a game, Shall we play again', True, (80, 200, 120))
-            mWLoc = M_win.get_rect(
-                center=(screen_width // 2, screen_height * 0.5))
-            save = SaveUpdater.decode_save_file()
-            save['monarch'] = True
-            SaveUpdater.encode_save_file(save)
-            messages = [(M_win, mWLoc)]
-        elif Ai == 'madman':
-            mad_1 = SpeechFont.render(
-                'This isnt a Prison, this is a Machine.', True, (255, 0, 0))
-            mad_2 = SpeechFont.render(
-                'ISNT THAT RIGHT ' + Madman.scare(), True, (255, 0, 0))
-            mad1loc = mad_1.get_rect(
-                center=(screen_width // 2, screen_height * 0.4))
-            mad2loc = mad_2.get_rect(
-                center=(screen_width // 2, screen_height * 0.5))
-            save = SaveUpdater.decode_save_file()
-            save['madman'] = True
-            SaveUpdater.encode_save_file(save)
-            messages = [(mad_1, mad1loc), (mad_2, mad2loc)]
-        else:
-            No_win = SpeechFont.render(
-                'Error: No AI selected', True, (255, 150, 255))
-            No_wLoc = No_win.get_rect(
-                center=(screen_width // 2, screen_height * 0.5))
-            messages = [(No_win, No_wLoc)]
-    else:
-        if Ai == 'enchanter':
-            Loss_1 = SpeechFont.render(
-                'All you need to do is learn', True, (255, 150, 255))
-            Loss_2 = SpeechFont.render('Again', True, (255, 150, 255))
-            l1Loc = Loss_1.get_rect(
-                center=(screen_width // 2, screen_height * 0.5))
-            l2Loc = Loss_2.get_rect(
-                center=(screen_width // 2, screen_height * 0.6))
-            messages = [(Loss_1, l1Loc), (Loss_2, l2Loc)]
-        elif Ai == 'monarch':
-            messages = []
-        elif Ai == 'madman':
-            mad_1 = SpeechFont.render(
-                'This isnt a Prison, this is a Machine', True, (255, 0, 0))
-            mad_2 = SpeechFont.render(
-                'ISNT THAT RIGHT ' + Madman.scare(), True, (255, 0, 0))
-            mad1loc = mad_1.get_rect(
-                center=(screen_width // 2, screen_height * 0.4))
-            mad2loc = mad_2.get_rect(
-                center=(screen_width // 2, screen_height * 0.5))
-            messages = [(mad_1, mad1loc), (mad_2, mad2loc)]
-        else:
-            No_loss = SpeechFont.render(
-                'Error: No AI selected', True, (255, 150, 255))
-            no_lLoc = No_loss.get_rect(
-                center=(screen_width // 2, screen_height * 0.5))
-            messages = [(No_loss, no_lLoc)]
 
-    # Display end game messages
-    print("cutscenes playing.")
-    if Ai == 'enchanter' and not SaveUpdater.decode_save_file()["beat_enchanter_first_time"] and not Won:
-        for message, loc in messages:
-            gameDisplay.fill((0, 0, 0))
-            gameDisplay.blit(message, loc)
-            pygame.display.flip()
-            skip = False
-            for i in range(4000):
-                pygame.time.delay(1)
-                if skip:
-                    break
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                        print("Game exiting")
-                        pygame.quit()
-                        return False
-                    if event.type == MOUSEBUTTONDOWN and event.button == 1:
-                        skip = True
-                    if event.type == KEYDOWN and event.key == K_F12:
-                        screenshot(gameDisplay)
-        save = SaveUpdater.decode_save_file()
-        save["beat_enchanter_first_time"] = True
-        SaveUpdater.encode_save_file(save)
-        # Enchanter cheats
-        Enchanter_HP = 100
-        player_HP = 1
-        running = True
-        enemy = []
-        friendly = []
-        # Spawn a bunch of enemy troops around the player spawn
-        for _ in range(10):
-            enemy.append(Units.Footman([
-                random.randint(int(player_base[0] - int(screen_width * 0.02)), int(
-                    player_base[0] + int(screen_width * 0.02))),
-                random.randint(int(player_base[1] - int(screen_height * 0.1)), int(
-                    player_base[1] - int(screen_height * 0.15))),
-                Scalars
-            ]))
-            enemy.append(Units.Horse([
-                random.randint(int(player_base[0] - int(screen_width * 0.02)), int(
-                    player_base[0] + int(screen_width * 0.02))),
-                random.randint(int(player_base[1] - int(screen_height * 0.1)), int(
-                    player_base[1] - int(screen_height * 0.15))),
-                Scalars
-            ]))
-            enemy.append(Units.Soldier([
-                random.randint(int(player_base[0] - int(screen_width * 0.02)), int(
-                    player_base[0] + int(screen_width * 0.02))),
-                random.randint(int(player_base[1] - int(screen_height * 0.1)), int(
-                    player_base[1] - int(screen_height * 0.15))),
-                Scalars
-            ]))
-            enemy.append(Units.Runner([
-                random.randint(int(player_base[0] - int(screen_width * 0.02)), int(
-                    player_base[0] + int(screen_width * 0.02))),
-                random.randint(int(player_base[1] - int(screen_height * 0.1)), int(
-                    player_base[1] - int(screen_height * 0.15))),
-                Scalars
-            ]))
-            for e in enemy:
-                e.target = player_base
-
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                    print("Game exiting")
-                    running = False
-                    pygame.quit()
-                    return False
-                if event.type == KEYDOWN and event.key == K_F12:
-                    screenshot(gameDisplay)
-
-            gameDisplay.fill((0, 0, 0))
-            gameDisplay.blit(BattleGround, BattleGround_pos)
-
-            for e in enemy:
-                e.move(dt, enemy, boundaries, Scalars)
-                gameDisplay.blit(e.Asset, (e.x, e.y))
-                gameDisplay.blit(Enemy_identifyer, (e.x + e.Asset.get_width() // 2 - Enemy_identifyer.get_width(
-                ) // 2, e.y - e.Asset.get_height() // 2 - Enemy_identifyer.get_height() // 2))
-                if (
-                    player_base[0] - int(screen_width *
-                                         0.005) <= e.x <= player_base[0] + int(screen_width * 0.005)
-                    and player_base[1] - int(screen_height * 0.005) <= e.y <= player_base[1] + int(screen_height * 0.005)
-                ):
-                    player_HP -= e.attack
-                    e.hp = 0
-                if e.hp <= 0:
-                    try:
-                        enemy.remove(e)
-                    except Exception as e:
-                        print(e)
-                    continue
-
-            if player_HP <= 0:
-                running = False
-
-            # Display player and enchanter HP
-            # Hp display
-            if hp_cache != (player_HP, Enchanter_HP):
-                hp_text = HPFont.render(
-                    f"{player_HP}:{Enchanter_HP}", True, (255, 150, 255))
-                hp_cache = (player_HP, Enchanter_HP)
-                if RPC_on:
-                    RPC.update(
-                        pid=pid,
-                        state="Losing to the Enchanter",
-                        details=f"They never learn",
-                        start=epoch,
-                        large_image="icon",
-                        large_text="The Enchanters Book awaits....")
-            gameDisplay.blit(hp_text, HP_pos)
-            # Display cursor
-            gameDisplay.blit(cursor_img, pygame.mouse.get_pos())
-
-            pygame.display.flip()
-            clock.tick()
-
-        Loss_1 = SpeechFont.render(
-            'All you need to do is learn…', True, (255, 150, 255))
-        Loss_2 = SpeechFont.render('Again.', True, (255, 150, 255))
-        l1Loc = Loss_1.get_rect(
-            center=(screen_width // 2, screen_height * 0.4))
-        l2Loc = Loss_2.get_rect(
-            center=(screen_width // 2, screen_height * 0.5))
-        messages = [(Loss_1, l1Loc), (Loss_2, l2Loc)]
-        for message, loc in messages:
-            gameDisplay.fill((0, 0, 0))
-            gameDisplay.blit(message, loc)
-            pygame.display.flip()
-            skip = False
-            for i in range(4000):
-                # Add a small delay to allow for smoother event processing
-                pygame.time.delay(1)
-                if skip:
-                    break
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                        print("Game exiting")
-                        pygame.quit()
-                        return False
-                    if event.type == MOUSEBUTTONDOWN and event.button == 1:
-                        skip = True
-                        if event.type == KEYDOWN and event.key == K_F12:
-                            screenshot(gameDisplay)
-
-    elif Ai == 'monarch' and not Won:
-        # Monarch crashes the game
-        Crash_1 = SpeechFont.render(
-            'You bore me, Guards!', True, (255, 150, 255))
-        crash_loc = Crash_1.get_rect(
-            center=(screen_width // 2, screen_height * 0.5))
-        gameDisplay.fill((0, 0, 0))
-        gameDisplay.blit(Crash_1, crash_loc)
-        pygame.display.flip()
-        pygame.time.delay(4000)
-        pygame.quit()
-        return False
-    else:
-        for message, loc in messages:
-            gameDisplay.fill((0, 0, 0))
-            gameDisplay.blit(message, loc)
-            pygame.display.flip()
-            skip = False
-            for i in range(4000):
-                pygame.time.delay(1)
-                if skip:
-                    break
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                        print("Game exiting")
-                        pygame.quit()
-                        return False
-                    if event.type == MOUSEBUTTONDOWN and event.button == 1:
-                        skip = True
-                    if event.type == KEYDOWN and event.key == K_F12:
-                        screenshot(gameDisplay)
-    print("Cutscenes played")
-    # Ask if the player wants to play again
-    play_again_font = pygame.font.Font(os.path.join(
-        "Assets", "Fonts", "Speech.ttf"), int(screen_height * 0.05))  # Dynamic font size
-    play_again_text = play_again_font.render(
-        'Do you want to play again? (Y/N)', True, (255, 255, 255))
-    score_text = play_again_font.render(
-        str(round(score)), True, (255, 255, 255))
-
-    # Center the text dynamically
-    play_again_text_rect = play_again_text.get_rect(
-        center=(screen_width // 2, screen_height * 0.6))
-    score_text_rect = score_text.get_rect(
-        center=(screen_width // 2, screen_height * 0.5))
-
-    gameDisplay.fill((0, 0, 0))
-    gameDisplay.blit(play_again_text, play_again_text_rect)
-    gameDisplay.blit(score_text, score_text_rect)
-    pygame.display.flip()
-
-    waiting_for_input = True
-    while waiting_for_input:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                print("Game exiting")
-                pygame.quit()
-                return False
-            if event.type == KEYDOWN:
-                if event.key == K_y:
-                    return True
-                elif event.key == K_n:
-                    return False
-                elif event.type == KEYDOWN and event.key == K_F12:
-                    screenshot(gameDisplay)
+    return Won, score
     # Show Score and ask if they wanna play again, if they player wants to return to menu, return False, Else return True (Doesnt apply to monarch as game is crashed)

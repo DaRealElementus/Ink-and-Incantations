@@ -3,6 +3,10 @@ import pygame
 import random
 import os
 
+# This is the card Modifiers block, a blank list containing the different card modifiers and their end Epoch.
+CARD_MODIFIERS = []
+
+
 
 class Unit:
     def __init__(self):
@@ -22,6 +26,11 @@ class Unit:
         self.move_timer = 0  # Initialize move timer for all units
         self.Asset = pygame.image.load(os.path.join(
             "Assets", "Sprites", "unit_sprites", "Footman.png"))
+        self.grid = None
+        self.GridGrid = None
+
+        self._last_path = []
+        self._last_goal = None
 
     def __str__(self):
         return "a unit of type " + self.__class__.__name__ + " with " + str(self.hp) + " HP and " + str(self.attack) + " attack at " + str(self.x) + " " + str(self.y) + " with a target of " + str(self.target) + " and a cost of " + str(self.cost) + " and a speed of " + str(self.speed)
