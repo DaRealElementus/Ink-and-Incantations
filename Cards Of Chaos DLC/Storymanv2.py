@@ -248,8 +248,58 @@ def _fight(opponent_key: str, gamedisplay: pygame.Surface, save: dict) -> bool:
     """
     Run a combat against opponent_key. Attempts to call Combat.BatStart if available,
     else falls back to a deterministic RNG result. Persists no changes here; caller must handle rewards/lives.
+    On losing a fight the player loses one life (persisted) and is required to refight the same encounter.
+    Shows a brief fade between the old/new candelabra life images from Assets/Lives/*.png.
     """
+    # helper to show fade between two lives images
+    def show_lives_fade(screen: pygame.Surface, old_lives: int, new_lives: int, duration_ms: int = 600):
+        try:
+            w, h = screen.get_width(), screen.get_height()
+            path_old = os.path.join("Assets", "Lives", f"{max(0, min(3, old_lives))}.png")
+            path_new = os.path.join("Assets", "Lives", f"{max(0, min(3, new_lives))}.png")
+            old_img = pygame.image.load(path_old) if os.path.exists(path_old) else None
+            new_img = pygame.image.load(path_new) if os.path.exists(path_new) else None
+        except Exception:
+            old_img = None
+            new_img = None
+
+        if old_img is None and new_img is None:
+            return
+
+        try:
+            # scale to reasonable size (top-left HUD area)
+            max_h = int(h * 0.15)
+            if old_img:
+                ratio_o = old_img.get_width() / old_img.get_height() if old_img.get_height() else 1
+                old_img = pygame.transform.smoothscale(old_img, (int(max_h * ratio_o), max_h)).convert_alpha()
+            if new_img:
+                ratio_n = new_img.get_width() / new_img.get_height() if new_img.get_height() else 1
+                new_img = pygame.transform.smoothscale(new_img, (int(max_h * ratio_n), max_h)).convert_alpha()
+        except Exception:
+            pass
+
+        frames = max(4, int(duration_ms / 16))
+        clock = pygame.time.Clock()
+        for i in range(frames + 1):
+            try:
+                t = i / frames
+                screen.fill((0, 0, 0))  # simple clear; Combat screen will redraw when combat resumes
+                # draw both with crossfade
+                if old_img:
+                    tmp_o = old_img.copy()
+                    tmp_o.set_alpha(max(0, int(255 * (1.0 - t))))
+                    screen.blit(tmp_o, (16, 16))
+                if new_img:
+                    tmp_n = new_img.copy()
+                    tmp_n.set_alpha(max(0, int(255 * (t))))
+                    screen.blit(tmp_n, (16, 16))
+                pygame.display.flip()
+            except Exception:
+                pass
+            clock.tick(60)
+
     try:
+        # map opponent_key -> Ai string used by Combat.BatStart
         if opponent_key.lower().startswith("enchanter"):
             Ai = 'enchanter'
             opponent_hand = ['fool', 'high_priestess', 'empress', 'magician']
@@ -266,8 +316,40 @@ def _fight(opponent_key: str, gamedisplay: pygame.Surface, save: dict) -> bool:
             Ai = 'enchanter'
             opponent_hand = ['fool', 'high_priestess', 'empress', 'magician']
 
-        Won, score = Combat.BatStart(Ai, gamedisplay, False, None, os.getpid(), Units, SaveUpdater, [scale_x, scale_y], [screen_x, screen_y], opponent_hand)
-        return bool(Won)
+        # Keep refighting until win or lives exhausted
+        while True:
+            Won, score = Combat.BatStart(Ai, gamedisplay, False, None, os.getpid(), Units, SaveUpdater, [scale_x, scale_y], [screen_x, screen_y], opponent_hand)
+            if Won:
+                return True
+
+            # Lost: reduce a life, show fade, persist and check for run end
+            # load latest save state, so we operate on current persisted lives
+            s = _save_load()
+            old_lives = int(s.get('lives', 0))
+            # apply reduction and persist
+            _reduce_life(s, 1)
+            new_lives = int(s.get('lives', 0))
+            # show fade between old/new lives images
+            try:
+                show_lives_fade(gamedisplay, old_lives, new_lives)
+            except Exception:
+                pass
+
+            # if no lives left, mark run ended and guild a card then return False
+            if new_lives <= 0:
+                s['RunEnded'] = True
+                _save_commit(s)
+                try:
+                    guild_one_card_at_run_end(s)
+                except Exception:
+                    pass
+                return False
+
+            # otherwise, persist and loop to refight the same opponent (no further action here)
+            _save_commit(s)
+            # short pause so player can prepare
+            pygame.time.delay(200)
+            # loop back to call Combat.BatStart again for the same opponent
     except Exception as e:
         print("Combat failed:", e)
         return False
@@ -311,10 +393,12 @@ class Shop:
         return lives, gold, won
 
     def _vendor_offers(self, screen, save: dict):
-        """Three-card offers UI (called from main shop). Left-click buy, right-click reroll, Esc to exit."""
+        """Three-card offers UI (called from main shop). Left-click buy, right-click reroll, Esc to exit.
+        Excludes any card IDs already present in save['Cards'] from being offered.
+        """
         if not isinstance(save, dict):
             return
-        w, h = screen.get_width(), screen.get_height()
+        w, h = int(screen.get_width()), int(screen.get_height())
         font = pygame.font.Font(os.path.join("Assets", "Fonts", "Speech.ttf"), max(14, int(scale_y * 22)))
         small = pygame.font.Font(os.path.join("Assets", "Fonts", "Speech.ttf"), max(12, int(scale_y * 18)))
 
@@ -342,14 +426,19 @@ class Shop:
 
         # generate offers
         all_ids = list(range(0, 22))
+        owned_ids = [cid for cid, _ in save.get('Cards', [])]  # exclude these from offers
         base_cost = 5
+
         def make_offers():
             offers = []
             used = set()
+            # candidate pool excludes owned ids
+            pool = [cid for cid in all_ids if cid not in owned_ids]
             for _ in range(3):
-                choices = [cid for cid in all_ids if cid not in used]
+                choices = [cid for cid in pool if cid not in used]
                 if not choices:
-                    choices = all_ids.copy()
+                    # no more unique non-owned cards to offer
+                    break
                 cid = random.choice(choices)
                 used.add(cid)
                 tier = random.randint(1, 3)
@@ -357,14 +446,19 @@ class Shop:
                 try:
                     preview = getattr(CardManager, id_to_class[cid])(guilded=False).img
                 except Exception:
-                    preview = pygame.Surface((80, 120))
+                    preview = pygame.Surface(((w*0.0359375 *2) + 50, (h*0.1125*2) + 100))
                     preview.fill((60, 60, 80))
                 offers.append({'id': cid, 'tier': tier, 'cost': cost, 'img': preview})
+            # If we couldn't fill 3 offers (all non-owned exhausted), append placeholders
+            while len(offers) < 3:
+                placeholder = {'id': None, 'tier': 0, 'cost': 0, 'img': pygame.Surface((int(w * 0.08), int(h * 0.18)))}
+                placeholder['img'].fill((40, 40, 40))
+                offers.append(placeholder)
             return offers
 
         offers = make_offers()
-        card_w = int(w * 0.18)
-        card_h = int(h * 0.18)
+        card_w = int(w * 0.0359375*4)
+        card_h = int(h * 0.1125 * 3)
         gap = int(w * 0.04)
         total_w = 3 * card_w + 2 * gap
         start_x = (w - total_w) // 2
@@ -401,31 +495,47 @@ class Shop:
                     img_s.fill((80, 80, 80))
                 img_r = img_s.get_rect(center=(rect.centerx, rect.top + int(rect.height * 0.35)))
                 screen.blit(img_s, img_r)
-                badge = small.render(f"Tier {off['tier']}", True, (255, 220, 120))
-                screen.blit(badge, (rect.left + 8, rect.top + 8))
-                cost_txt = small.render(f"Cost: {off['cost']}g", True, (200, 200, 200) if not hovered else (255, 255, 200))
-                screen.blit(cost_txt, (rect.left + 8, rect.bottom - 8 - cost_txt.get_height()))
-                name = id_to_class.get(off['id'], f"Card {off['id']}")
-                name_txt = font.render(name, True, (220, 220, 255))
-                nrect = name_txt.get_rect(center=(rect.centerx, rect.top + rect.height - int(rect.height * 0.12)))
-                screen.blit(name_txt, nrect)
+                # if placeholder (id is None) show "Owned" label
+                if off['id'] is None:
+                    badge = small.render("No Offer", True, (200, 120, 120))
+                    screen.blit(badge, (rect.left + 8, rect.top + 8))
+                    cost_txt = small.render(f"(Already owned)", True, (160, 160, 160))
+                    screen.blit(cost_txt, (rect.left + 8, rect.bottom - 8 - cost_txt.get_height()))
+                    name_txt = font.render("—", True, (220, 220, 255))
+                    nrect = name_txt.get_rect(center=(rect.centerx, rect.top + rect.height - int(rect.height * 0.12)))
+                    screen.blit(name_txt, nrect)
+                else:
+                    badge = small.render(f"Tier {off['tier']}", True, (255, 220, 120))
+                    screen.blit(badge, (rect.left + 8, rect.top + 8))
+                    cost_txt = small.render(f"Cost: {off['cost']}g", True, (200, 200, 200) if not hovered else (255, 255, 200))
+                    screen.blit(cost_txt, (rect.left + 8, rect.bottom - 8 - cost_txt.get_height()))
+                    name = id_to_class.get(off['id'], f"Card {off['id']}")
+                    name_txt = font.render(name, True, (220, 220, 255))
+                    nrect = name_txt.get_rect(center=(rect.centerx, rect.top + rect.height - int(rect.height * 0.12)))
+                    screen.blit(name_txt, nrect)
+
                 if hovered:
                     pygame.draw.rect(screen, (200, 200, 80), rect, 3, border_radius=8)
 
             # tooltip
             if hovered_idx is not None:
                 off = offers[hovered_idx]
-                cname = id_to_class.get(off['id'], f"Card {off['id']}")
-                doc = ""
-                try:
-                    cls = getattr(CardManager, cname)
-                    doc = getattr(cls.Invoke, "__doc__", "") or ""
-                except Exception:
+                if off['id'] is None:
+                    tooltip_lines = ["No Offer", "You already own all available cards."]
+                else:
+                    cname = id_to_class.get(off['id'], f"Card {off['id']}")
                     doc = ""
-                tooltip_lines = [f"{cname} (Tier {off['tier']})", f"Cost: {off['cost']}g"]
-                if doc:
-                    doc_lines = [ln.strip() for ln in doc.splitlines() if ln.strip()]
-                    tooltip_lines += doc_lines[:3]
+                    try:
+                        cls = getattr(CardManager, cname)
+                        doc = getattr(cls.Invoke, "__doc__", "") or ""
+                        doc = doc.lstrip("Invoke the card's special ability\n")
+                    except Exception:
+                        doc = ""
+                    tooltip_lines = [f"{cname} (Tier {off['tier']})", f"Cost: {off['cost']}g"]
+                    if doc:
+                        doc_lines = [ln.strip() for ln in doc.splitlines() if ln.strip()]
+                        tooltip_lines += doc_lines[:3]
+
                 texts = [small.render(ln, True, (240,240,240)) for ln in tooltip_lines]
                 padding = 8
                 tw = max(t.get_width() for t in texts) + padding*2
@@ -467,6 +577,14 @@ class Shop:
                     for i, rect in enumerate(offer_rects):
                         if rect.collidepoint(ev.pos):
                             off = offers[i]
+                            # ignore clicks on placeholders / already-owned slots
+                            if off.get('id') is None:
+                                # brief feedback
+                                n = small.render("Nothing to buy here", True, (255,100,100))
+                                screen.blit(n, (w//2 - n.get_width()//2, int(h * 0.9)))
+                                pygame.display.flip()
+                                pygame.time.delay(400)
+                                continue
                             cur_gold = int(save.get('gold', 0))
                             if cur_gold >= off['cost']:
                                 save['gold'] = cur_gold - off['cost']
@@ -512,7 +630,7 @@ class Shop:
                                                   int(Battleground.get_height() * (h / 1000) * 1.1)))
         bg_rect = bg.get_rect(center=(w // 2, int(h // 2 - (bg.get_height() * 0.05))))
 
-        face_sz = (int(bg_rect.width * 0.5), int(bg_rect.height * 0.5))
+        face_sz = (int(vendor_img.get_width() * scale_y), int(vendor_img.get_height() * scale_y))
         face_surf = pygame.transform.scale(vendor_img, face_sz)
         try:
             face_surf = face_surf.convert_alpha()
@@ -632,22 +750,19 @@ class Shop:
 # --- Story flow: begin_story_mode and resume_from_save ---
 
 def begin_story_mode(gamedisplay: pygame.Surface):
+
     """
     Linear story flow. Persist save after every important event.
     Enforces sequence: Enchanter1 -> Vendor -> Enchanter2 -> Vendor -> Enchanter3 -> Vendor -> Monarch...
     """
-    save = _save_load()
+    pygame.mixer.music.load(os.path.join(
+        "Assets", "Music", "DungeonSynth2Hr.mp3"))
+    pygame.mixer.music.play(loops=-1)
+    pygame.mixer.music.set_volume(1) if SaveUpdater.decode_save_file()[
+        'music'] else pygame.mixer.music.set_volume(0)
     # Ensure fields
-    save.setdefault('Deck', [])
-    save.setdefault('Hand', [])
-    save.setdefault('Cards', [])
-    save.setdefault('World', 0)
-    save.setdefault('Level', 0)
-    save.setdefault('lives', 3)
-    save.setdefault('gold', int(save.get('gold', 0)))
-    save.setdefault('NumWins', 0)
-    save.setdefault('ShopsVisited', 0)
-    _save_commit(save)
+    ModSave.resetRun()
+    save = _save_load()
 
     # Start run
     save['World'] = 1
@@ -764,6 +879,11 @@ def begin_story_mode(gamedisplay: pygame.Surface):
 # --- Resume from save ---
 
 def resume_from_save(gamedisplay: pygame.Surface):
+    pygame.mixer.music.load(os.path.join(
+        "Assets", "Music", "DungeonSynth2Hr.mp3"))
+    pygame.mixer.music.play(loops=-1)
+    pygame.mixer.music.set_volume(1) if SaveUpdater.decode_save_file()[
+        'music'] else pygame.mixer.music.set_volume(0)
     save = _save_load()
     world = int(save.get('World', 0))
     level = int(save.get('Level', 0))
@@ -1070,7 +1190,10 @@ def BuildDeck(gamedisplay: pygame.Surface, font: Font):
         7: 'Chariot', 8: 'Justice', 9: 'Hermit', 10: 'Wheel', 11: 'Strength', 12: 'Hanged', 13: 'Death',
         14: 'Temperance', 15: 'Devil', 16: 'Tower', 17: 'Star', 18: 'Moon', 19: 'Sun', 20: 'Judgement', 21: 'World'
     }
+
+    
     card_ids = list(range(0, 22))
+    percentage_unlocked = len(cards)/len(card_ids)
     unlocked_ids = []
     for cid in card_ids:
         if id_matrix.get(cid) == 'Guilded' or id_matrix.get(cid) is True:
@@ -1117,7 +1240,7 @@ def BuildDeck(gamedisplay: pygame.Surface, font: Font):
     deck_spacing = card_w + 40
     deck_start_x = center_x - ((deck_spacing * 3) // 2)
     deck_radius = 180
-    arc_angle = 180  # degrees
+    arc_angle = 180*percentage_unlocked  # degrees
     running = True
     selected_deck_idx = None
     while running:

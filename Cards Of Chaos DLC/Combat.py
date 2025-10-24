@@ -5,6 +5,7 @@ import math
 from Ai import Enchanter, Madman, Monarch
 from pygame.locals import *
 import os
+import CardManager
 
 
 def screenshot(screen):
@@ -110,11 +111,7 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid:in
         "Assets", "Sprites", "InkBlot.png")).convert_alpha()
     clock = pygame.time.Clock()
     gameDisplay.fill((0, 0, 0))
-    pygame.mixer.music.load(os.path.join(
-        "Assets", "Music", "DungeonSynth2Hr.mp3"))
-    pygame.mixer.music.play(loops=-1)
-    pygame.mixer.music.set_volume(1) if SaveUpdater.decode_save_file()[
-        'music'] else pygame.mixer.music.set_volume(0)
+    
 
     # Scale assets dynamically
 
@@ -390,6 +387,34 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid:in
             [int(mana_images[i].get_width() * scale_y),
              int(mana_images[i].get_height() * scale_y)]
         )
+
+    # --- Card draw integration ---
+    card_timer = 0.0
+    card_interval = 10.0  # seconds between draws
+    active_card = None  # {'surf':Surface,'start':time,'duration':float,'owner':str,'invoked':bool,'effect':dict}
+    active_effects = []  # list of effect dicts with lifecycle and applied flag
+    # persistent flags (cleared when effect expires)
+    half_damage = {'player': False, 'enemy': False}
+    justice_active = False
+    justice_owner = None
+    world_pending = False
+    # Preload sfx (will play over music)
+    try:
+        card_sfx = pygame.mixer.Sound(os.path.join("Assets", "Music", "Card flip.mp3"))
+    except Exception:
+        card_sfx = None
+
+    # id -> CardManager class mapping (matches other files)
+    id_to_class = {
+        0: 'Fool', 1: 'Magician', 2: 'HighPriestess', 3: 'Empress', 4: 'Emperor', 5: 'Hierophant', 6: 'Lovers',
+        7: 'Chariot', 8: 'Justice', 9: 'Hermit', 10: 'Wheel', 11: 'Strength', 12: 'Hanged', 13: 'Death',
+        14: 'Temperance', 15: 'Devil', 16: 'Tower', 17: 'Star', 18: 'Moon', 19: 'Sun', 20: 'Judgement', 21: 'World'
+    }
+
+    if Ai == 'madman':
+        # Madman AI specific variables
+        pass
+
     # Main game loop
     running = True
     while running:
@@ -731,7 +756,6 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid:in
                     except Exception as e:
                         print(e)
                     continue
-
         # Mana Regen, for both player and Enchanter
         P_ratio = {0: 1, 1: 3, 2: 4, 3: 4, 4: 6}
 
@@ -748,9 +772,222 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid:in
             Enchanter_mana = min(Enchanter_mana + 1, 9)
             enchanter_mana_timer = 0
 
-        if Ai == 'madman':
-            # Yes, the madman Cheats, Hes mad, he doesnt care about the rules
-            Enchanter_mana = 9
+        # --- Card draw timing + display handling ---
+        card_timer += dt
+        if card_timer >= card_interval:
+            # attempt a draw for either player or ai depending on available decks
+            card_timer = 0.0
+            # load player deck from save via SaveUpdater passed into BatStart
+            try:
+                save = SaveUpdater.decode_save_file() or {}
+            except Exception:
+                save = {}
+            player_deck = list(save.get('Deck', []) or save.get('Hand', []))
+            ai_options = list(opponentHand or [])
+            owner_choice = None
+            if player_deck and ai_options:
+                owner_choice = random.choice(['player', 'ai'])
+            elif player_deck:
+                owner_choice = 'player'
+            elif ai_options:
+                owner_choice = 'ai'
+
+            if owner_choice:
+                if owner_choice == 'player':
+                    # pick id from player's deck/hand
+                    cid = random.choice(player_deck)
+                    class_name = id_to_class.get(cid)
+                    guilded_flag = False
+                    for c in save.get('Cards', []):
+                        if c and c[0] == cid and c[1]:
+                            guilded_flag = True
+                            break
+                    try:
+                        card_cls = getattr(CardManager, class_name)
+                        card_obj = card_cls(guilded=guilded_flag)
+                    except Exception:
+                        card_obj = None
+                else:
+                    # AI: pick from opponentHand -> canonicalise to class name
+                    raw = random.choice(ai_options)
+                    parts = []
+                    if isinstance(raw, str):
+                        for p in raw.replace('_', ' ').split():
+                            parts.append(p.capitalize())
+                    class_name = ''.join(parts)
+                    try:
+                        card_cls = getattr(CardManager, class_name)
+                        card_obj = card_cls(guilded=False)
+                    except Exception:
+                        card_obj = None
+
+                if card_obj:
+                    # call Invoke once (owner string: 'player' or 'enemy')
+                    try:
+                        effect = card_obj.Invoke('player' if owner_choice == 'player' else 'enemy')
+                    except Exception:
+                        effect = None
+
+                    # play flip sound
+                    try:
+                        if card_sfx:
+                            card_sfx.play()
+                    except Exception:
+                        pass
+
+                    # prepare scaled surface for display
+                    try:
+                        max_h = int(screen_height * 0.10)
+                        ratio = card_obj.img.get_width() / card_obj.img.get_height()
+                        surf = pygame.transform.smoothscale(card_obj.img, (int(max_h * ratio), max_h)).convert_alpha()
+                    except Exception:
+                        surf = None
+
+                    # publish active card for UI
+                    active_card = {'surf': surf, 'start': time.time(), 'duration': 3.0, 'owner': owner_choice, 'invoked': True, 'effect': effect}
+
+                    # enqueue the effect (persisted & applied only once)
+                    if effect and isinstance(effect, dict):
+                        # normalise duration: CardManager mostly uses large 'end' placeholders,
+                        # treat very large numbers as long-running (no auto-expire)
+                        raw_end = effect.get('end', 0)
+                        if raw_end is None:
+                            duration = 0.0
+                        else:
+                            # if end looks like milliseconds (>1000) assume ms -> seconds
+                            duration = float(raw_end) / 1000.0 if raw_end > 1000 else float(raw_end)
+                        eff_entry = {
+                            'Name': effect.get('Name'),
+                            'Owner': effect.get('Owner'),
+                            'start': time.time(),
+                            'duration': duration,
+                            'applied': False,
+                            'raw': effect
+                        }
+                        active_effects.append(eff_entry)
+
+        # show active card (under HP) and fade
+        if active_card is not None:
+            elapsed = time.time() - active_card['start']
+            alpha = 255
+            if elapsed >= active_card['duration']:
+                active_card = None
+            else:
+                # Fade during last half
+                if elapsed > (active_card['duration'] * 0.5):
+                    fade_t = (elapsed - active_card['duration'] * 0.5) / (active_card['duration'] * 0.5)
+                    alpha = max(0, 255 - int(fade_t * 255))
+                # blit beneath HP text (HP_pos and hp_text defined above)
+                try:
+                    surf = active_card['surf']
+                    if surf:
+                        tmp = surf.copy()
+                        tmp.set_alpha(alpha)
+                        # compute position under HP text
+                        hp_w = hp_text.get_width() if 'hp_text' in locals() else 0
+                        hp_h = hp_text.get_height() if 'hp_text' in locals() else 0
+                        card_x = HP_pos[0] + hp_w // 2 - tmp.get_width() // 2
+                        card_y = HP_pos[1] + hp_h + 8
+
+                        # --- draw owner glow behind the card ---
+                        # glow color per owner
+                        owner = active_card.get('owner', '')
+                        if owner == 'player':
+                            glow_color = (80, 160, 255)
+                        else:
+                            glow_color = (255, 100, 120)
+                        # padding for glow relative to scale
+                        pad = max(6, int(8 * scale_y))
+                        gw = tmp.get_width() + pad * 2
+                        gh = tmp.get_height() + pad * 2
+                        glow_surf = pygame.Surface((gw, gh), pygame.SRCALPHA)
+                        # draw several concentric ellipses to simulate a soft glow
+                        steps = max(3, pad // 2)
+                        for i in range(steps, 0, -1):
+                            # alpha falloff
+                            a = int(120 * (i / steps) * (alpha / 255))
+                            rect = pygame.Rect((pad - i, pad - i), (tmp.get_width() + i * 2, tmp.get_height() + i * 2))
+                            col = (glow_color[0], glow_color[1], glow_color[2], a)
+                            try:
+                                pygame.draw.ellipse(glow_surf, col, rect)
+                            except Exception:
+                                # fallback: draw a filled rounded rect
+                                pygame.draw.rect(glow_surf, col, rect, border_radius=max(1, i))
+
+                        # blit glow then card
+                        gameDisplay.blit(glow_surf, (card_x - pad, card_y - pad))
+                        gameDisplay.blit(tmp, (card_x, card_y))
+                except Exception:
+                    pass
+
+        # --- process active card effects (apply once, manage persistent flags) ---
+        if active_effects:
+            now = time.time()
+            for eff in active_effects[:]:
+                # one-shot handlers (safe, minimal)
+                if not eff.get('applied', False):
+                    name = eff.get('Name', '') or (eff.get('raw') or {}).get('Name', '')
+                    owner = eff.get('Owner', '') or (eff.get('raw') or {}).get('Owner', '')
+                    try:
+                        if name == 'Empress':
+                            # spawn 1-3 random basic troops for owner
+                            cnt = random.randint(1, 3)
+                            target_list = friendly if owner == 'player' else enemy
+                            spawn_base = player_base if owner == 'player' else enemy_base
+                            choices = (Units.Footman, Units.Soldier, Units.Horse)
+                            for _ in range(cnt):
+                                cls = random.choice(choices)
+                                target_list.append(cls(spawn_base, Scalars))
+                        elif name == 'Magician':
+                            # copy last unit owned (if any)
+                            target_list = friendly if owner == 'player' else enemy
+                            if target_list:
+                                # find last non-Generator unit
+                                for u in reversed(target_list):
+                                    if u.__class__.__name__ != 'Generator':
+                                        cname = u.__class__.__name__
+                                        spawn_base = player_base if owner == 'player' else enemy_base
+                                        if hasattr(Units, cname):
+                                            cls = getattr(Units, cname)
+                                            target_list.append(cls(spawn_base, Scalars))
+                                        break
+                        elif name == 'Star':
+                            # small safe heal to owner's units
+                            target_list = friendly if owner == 'player' else enemy
+                            for u in target_list:
+                                try:
+                                    u.hp = int(u.hp + 5)
+                                except Exception:
+                                    pass
+                        elif name == 'HighPriestess':
+                            half_damage[owner] = True
+                        elif name == 'Justice':
+                            justice_active = True
+                            justice_owner = owner
+                        elif name == 'World':
+                            world_pending = True
+                        # mark applied so we don't re-apply repeated effects
+                    except Exception:
+                        pass
+                    eff['applied'] = True
+
+                # expire effect if it has a finite duration
+                dur = eff.get('duration', 0.0)
+                if dur and (now - eff['start'] >= dur):
+                    # undo persistent flags where reasonable
+                    try:
+                        if eff.get('Name') == 'HighPriestess':
+                            half_damage[eff.get('Owner')] = False
+                        if eff.get('Name') == 'Justice':
+                            justice_active = False
+                            justice_owner = None
+                    except Exception:
+                        pass
+                    try:
+                        active_effects.remove(eff)
+                    except Exception:
+                        pass
+
         # Summoning enemy units
         summon_timer += dt
         if (summon_timer >= 5) or (Ai == 'madman' and summon_timer >= 1):
@@ -804,6 +1041,8 @@ def BatStart(Ai: str, display: pygame.Surface, RPC_on: bool, RPC: object, pid:in
             Enemy_ai.target(enemy, friendly, Pumps, player_HP,
                             Enchanter_HP, player_base, enemy_base)
             targeting_timer = 0
+
+        
 
         if player_HP <= 0:
             running = False

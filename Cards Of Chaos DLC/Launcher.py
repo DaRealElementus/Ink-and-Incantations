@@ -497,6 +497,8 @@ if __name__ == "__main__":
                         pygame.display.update()
 
                         # Call the story manager for new game here
+                        #mute music
+                        music.stop()
                         StoryManager.begin_story_mode(gameDisplay)
 
                     music = pygame.mixer.Sound(os.path.join(
@@ -545,6 +547,8 @@ if __name__ == "__main__":
                         pygame.time.delay(1)
                         pygame.display.update()
                     
+                    # mute music
+                    music.stop()
                     StoryManager.resume_from_save(gameDisplay)
 
                     music = pygame.mixer.Sound(os.path.join(
@@ -560,7 +564,6 @@ if __name__ == "__main__":
                     SaveUpdater.encode_save_file(save)
                     Audio = AudioUnmute if save['music'] else AudioMute
         if event.type == MOUSEMOTION:
-            # Selector: Show names of villains on hover, each villain occupies 1/3 of the selector's width
             if AudioMuteRect.collidepoint(event.pos):
                 pygame.draw.rect(gameDisplay, (0, 0, 0), AudioHoverUn.get_rect(topright=event.pos)) if SaveUpdater.decode_save_file()[
                     'music'] else pygame.draw.rect(gameDisplay, (0, 0, 0), AudioHoverMu.get_rect(topright=event.pos))
